@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1a1a2e">
+<title>父亲节快乐 · 2026</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:linear-gradient(180deg,#0f0c29,#1a1a2e 40%,#16213e 100%);color:#fff;font-family:"PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh;overflow-x:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+
+.hero{text-align:center;padding:60px 24px 30px;position:relative}
+.hero .badge{display:inline-block;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:6px 18px;font-size:.78rem;color:rgba(255,255,255,.5);letter-spacing:2px;margin-bottom:20px}
+.hero h1{font-size:clamp(2.2rem,8vw,3.6rem);font-weight:900;line-height:1.2;margin-bottom:12px;background:linear-gradient(135deg,#f5af19,#f12711,#f5af19);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero .sub{font-size:1.05rem;color:rgba(255,255,255,.4);letter-spacing:1px}
+.hero .big-date{font-size:clamp(3.5rem,12vw,6rem);font-weight:900;margin:20px0 8px;color:#fff;text-shadow:0 0 60px rgba(241,39,17,.3),0 0 120px rgba(245,175,25,.15)}
+.hero .date-label{font-size:.85rem;color:rgba(255,255,255,.3);letter-spacing:4px}
+
+.countdown-row{display:flex;justify-content:center;gap:16px;margin:28px0;flex-wrap:wrap}
+.countdown-row .cd{text-align:center;min-width:60px}
+.countdown-row .cd .num{font-size:2rem;font-weight:900;color:#f5af19;line-height:1}
+.countdown-row .cd .lbl{font-size:.65rem;color:rgba(255,255,255,.3);margin-top:4px;letter-spacing:1px}
+
+.section{max-width:480px;margin:0 auto;padding:0 24px}
+.card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:24px;padding:28px 24px;margin-bottom:20px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.card h3{font-size:1.05rem;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card p{font-size:.88rem;line-height:1.8;color:rgba(255,255,255,.55)}
+.card .highlight{color:#f5af19;font-weight:600}
+
+.msg-box{position:relative}
+.msg-box textarea{width:100%;height:120px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;color:#fff;font-size:.9rem;padding:16px;resize:none;outline:none;font-family:inherit;line-height:1.7;transition:border .3s}
+.msg-box textarea:focus{border-color:#f5af19}
+.msg-box .chars{position:absolute;bottom:12px;right:16px;font-size:.7rem;color:rgba(255,255,255,.2)}
+
+.btn{display:block;width:100%;height:52px;border-radius:14px;border:none;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:1px;transition:all .3s;margin-top:12px}
+.btn-primary{background:linear-gradient(135deg,#f5af19,#f12711);color:#fff;box-shadow:0 4px 28px rgba(241,39,17,.3)}
+.btn-primary:active{transform:scale(.96)}
+.btn-outline{background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.55)}
+
+.quotes{margin-top:8px}
+.quote{font-size:.82rem;color:rgba(255,255,255,.3);font-style:italic;text-align:center;padding:10px0;line-height:1.8}
+.quote .author{display:block;font-style:normal;font-size:.7rem;margin-top:4px;color:rgba(255,255,255,.15)}
+
+.footer{text-align:center;padding:40px 24px 30px;color:rgba(255,255,255,.12);font-size:.72rem;letter-spacing:2px}
+
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.12);backdrop-filter:blur(16px);padding:10px 24px;border-radius:20px;font-size:.85rem;z-index:100;animation:fadeInOut 2.4s ease forwards;pointer-events:none}
+@keyframes fadeInOut{0%{opacity:0;transform:translateX(-50%) translateY(10px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}70%{opacity:1}100%{opacity:0}}
+
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.content-rel{position:relative;z-index:1}
+
+@media(min-width:768px){.section{max-width:560px}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="content-rel">
+<div class="hero">
+<div class="badge">👔 父亲节 · 2026</div>
+<h1>爸爸，辛苦了</h1>
+<div class="big-date" id="daysLeft">2</div>
+<div class="date-label">天 后 就 是 父 亲 节</div>
+<div class="countdown-row">
+<div class="cd"><div class="num" id="cd-d">2</div><div class="lbl">天</div></div>
+<div class="cd"><div class="num" id="cd-h">0</div><div class="lbl">时</div></div>
+<div class="cd"><div class="num" id="cd-m">0</div><div class="lbl">分</div></div>
+<div class="cd"><div class="num" id="cd-s">0</div><div class="lbl">秒</div></div>
+</div>
+<p class="sub">2026年6月21日 · 星期日</p>
+</div>
+
+<div class="section">
+<div class="card msg-box">
+<h3>✍️ 写给爸爸的话</h3>
+<textarea id="msg" placeholder="爸，有些话当面不好意思说&#10;趁今天写下来……" maxlength="500"></textarea>
+<div class="chars"><span id="charCount">0</span>/500</div>
+<button class="btn btn-primary" id="saveMsg">💛 保存我的心里话</button>
+</div>
+
+<div class="card" id="savedCard" style="display:none">
+<h3>📝 我写给爸爸的话</h3>
+<p id="savedMsg" style="white-space:pre-wrap"></p>
+<button class="btn btn-outline" id="clearMsg">重新写</button>
+</div>
+
+<div class="card" id="fatherDayCard" style="display:none">
+<h3>🎉 今天就是父亲节！</h3>
+<p>别等了，<span class="highlight">现在就去给爸爸打个电话</span>，或者给他一个大大的拥抱吧。</p>
+</div>
+
+<div class="quotes">
+<div class="quote">"父亲是那个不会说爱你，却把最好的都给你的人。"</div>
+<div class="quote">"小时候你牵着我，长大了我扶着你。"<span class="author">—— 致父亲</span></div>
+</div>
+</div>
+
+<div class="footer">💙 父亲节快乐 · 2026.06.21</div>
+</div>
+
+<script>
+/* ====== PARTICLES ====== */
+(function(){var c=document.getElementById("c"),ctx=c.getContext("2d"),w,h,ps=[];
+function rs(){w=c.width=window.innerWidth;h=c.height=window.innerHeight}
+rs();window.addEventListener("resize",rs);
+for(var i=0;i<35;i++){ps.push({x:Math.random()*w,y:Math.random()*h,r:.3+Math.random()*1.2,vx:(Math.random()-.5)*.3,vy:-Math.random()*.5-.2,o:Math.random()*.5+.2})}
+function r(){ctx.clearRect(0,0,w,h);
+for(var i=0;i<ps.length;i++){var p=ps[i];p.x+=p.vx;p.y+=p.vy;p.o+=.002;
+if(p.y<-10){p.y=h+10;p.x=Math.random()*w}
+var a=.5+.5*Math.sin(p.o);ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle="rgba(245,175,25,"+(a*.25)+")";ctx.fill()}
+requestAnimationFrame(r)}r()})();
+
+/* ====== COUNTDOWN ====== */
+var FATHER_DAY=new Date(2026,5,21);
+function pad(n){return n<10?"0"+n:n}
+function updateCD(){
+var n=new Date(),diff=FATHER_DAY-n;
+if(diff<=0){
+document.getElementById("daysLeft").textContent="🎉";
+document.querySelector(".date-label").textContent="今天就是父亲节！";
+document.getElementById("cd-d").textContent="0";document.getElementById("cd-h").textContent="0";document.getElementById("cd-m").textContent="0";document.getElementById("cd-s").textContent="0";
+var fc=document.getElementById("fatherDayCard");if(fc)fc.style.display="block";
+return}
+var d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
+document.getElementById("daysLeft").textContent=d;
+document.getElementById("cd-d").textContent=d;document.getElementById("cd-h").textContent=pad(h);document.getElementById("cd-m").textContent=pad(m);document.getElementById("cd-s").textContent=pad(s)}
+updateCD();setInterval(updateCD,1000);
+
+/* ====== MESSAGE ====== */
+var msgEl=document.getElementById("msg"),savedMsg=document.getElementById("savedMsg"),savedCard=document.getElementById("savedCard");
+msgEl.addEventListener("input",function(){document.getElementById("charCount").textContent=this.value.length});
+var saved=localStorage.getItem("fatherday2026");
+if(saved){savedMsg.textContent=saved;savedCard.style.display="block"}
+document.getElementById("saveMsg").addEventListener("click",function(){
+var v=msgEl.value.trim();if(!v){st("写上几句话再保存吧 😊");return}
+localStorage.setItem("fatherday2026",v);savedMsg.textContent=v;savedCard.style.display="block";st("已保存 💛 父亲节那天给爸爸看");
+});
+document.getElementById("clearMsg").addEventListener("click",function(){localStorage.removeItem("fatherday2026");savedCard.style.display="none";msgEl.value="";document.getElementById("charCount").textContent="0";st("已清除")});
+function st(t){var e=document.createElement("div");e.className="toast";e.textContent=t;document.body.appendChild(e);setTimeout(function(){e.remove()},2400)}
+</script>
+</body>
+</html>
