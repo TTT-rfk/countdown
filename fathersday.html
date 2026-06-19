@@ -2,140 +2,188 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#1a1a2e">
-<title>父亲节快乐 · 2026</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>父亲节快乐</title>
+<meta property="og:title" content="父亲节快乐">
+<meta property="og:description" content="祝亲爱的爸爸父亲节快乐！">
+<meta property="og:type" content="article">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:linear-gradient(180deg,#0f0c29,#1a1a2e 40%,#16213e 100%);color:#fff;font-family:"PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh;overflow-x:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
-
-.hero{text-align:center;padding:60px 24px 30px;position:relative}
-.hero .badge{display:inline-block;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:6px 18px;font-size:.78rem;color:rgba(255,255,255,.5);letter-spacing:2px;margin-bottom:20px}
-.hero h1{font-size:clamp(2.2rem,8vw,3.6rem);font-weight:900;line-height:1.2;margin-bottom:12px;background:linear-gradient(135deg,#f5af19,#f12711,#f5af19);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero .sub{font-size:1.05rem;color:rgba(255,255,255,.4);letter-spacing:1px}
-.hero .big-date{font-size:clamp(3.5rem,12vw,6rem);font-weight:900;margin:20px0 8px;color:#fff;text-shadow:0 0 60px rgba(241,39,17,.3),0 0 120px rgba(245,175,25,.15)}
-.hero .date-label{font-size:.85rem;color:rgba(255,255,255,.3);letter-spacing:4px}
-
-.countdown-row{display:flex;justify-content:center;gap:16px;margin:28px0;flex-wrap:wrap}
-.countdown-row .cd{text-align:center;min-width:60px}
-.countdown-row .cd .num{font-size:2rem;font-weight:900;color:#f5af19;line-height:1}
-.countdown-row .cd .lbl{font-size:.65rem;color:rgba(255,255,255,.3);margin-top:4px;letter-spacing:1px}
-
-.section{max-width:480px;margin:0 auto;padding:0 24px}
-.card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:24px;padding:28px 24px;margin-bottom:20px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.card h3{font-size:1.05rem;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.card p{font-size:.88rem;line-height:1.8;color:rgba(255,255,255,.55)}
-.card .highlight{color:#f5af19;font-weight:600}
-
-.msg-box{position:relative}
-.msg-box textarea{width:100%;height:120px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;color:#fff;font-size:.9rem;padding:16px;resize:none;outline:none;font-family:inherit;line-height:1.7;transition:border .3s}
-.msg-box textarea:focus{border-color:#f5af19}
-.msg-box .chars{position:absolute;bottom:12px;right:16px;font-size:.7rem;color:rgba(255,255,255,.2)}
-
-.btn{display:block;width:100%;height:52px;border-radius:14px;border:none;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:1px;transition:all .3s;margin-top:12px}
-.btn-primary{background:linear-gradient(135deg,#f5af19,#f12711);color:#fff;box-shadow:0 4px 28px rgba(241,39,17,.3)}
-.btn-primary:active{transform:scale(.96)}
-.btn-outline{background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.55)}
-
-.quotes{margin-top:8px}
-.quote{font-size:.82rem;color:rgba(255,255,255,.3);font-style:italic;text-align:center;padding:10px0;line-height:1.8}
-.quote .author{display:block;font-style:normal;font-size:.7rem;margin-top:4px;color:rgba(255,255,255,.15)}
-
-.footer{text-align:center;padding:40px 24px 30px;color:rgba(255,255,255,.12);font-size:.72rem;letter-spacing:2px}
-
-.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.12);backdrop-filter:blur(16px);padding:10px 24px;border-radius:20px;font-size:.85rem;z-index:100;animation:fadeInOut 2.4s ease forwards;pointer-events:none}
-@keyframes fadeInOut{0%{opacity:0;transform:translateX(-50%) translateY(10px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}70%{opacity:1}100%{opacity:0}}
-
-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
-.content-rel{position:relative;z-index:1}
-
-@media(min-width:768px){.section{max-width:560px}}
+html,body{width:100%;height:100%;overflow:hidden;font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+body{background:#0a0a1a}
+#firework-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.page{position:relative;z-index:1;width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:20px;transition:opacity .6s,transform .6s}
+.page.hidden{display:none;opacity:0;transform:translateY(30px)}
+.page.active{display:flex;opacity:1;transform:translateY(0)}
+.card{background:rgba(10,10,30,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,215,0,.25);border-radius:20px;padding:32px 26px;max-width:460px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.5),0 0 80px rgba(255,180,40,.08)}
+.title-main{font-size:clamp(28px,6vw,46px);font-weight:900;color:#ffd54f;text-shadow:0 0 30px rgba(255,180,40,.6),0 0 60px rgba(255,160,20,.3),0 2px 4px rgba(0,0,0,.5);margin-bottom:6px;letter-spacing:2px}
+.title-sub{font-size:clamp(13px,2.8vw,16px);color:#ffb74d;margin-bottom:10px;font-weight:300;letter-spacing:1px}
+.title-thanks{font-size:clamp(22px,5vw,36px);font-weight:800;color:#ffd54f;text-shadow:0 0 24px rgba(255,180,40,.5),0 0 50px rgba(255,160,20,.25);margin-bottom:4px}
+.question-box{margin:20px 0}
+.question-label{font-size:clamp(16px,3.5vw,20px);color:#ffe0b2;margin-bottom:16px;line-height:1.6;font-weight:500}
+.question-label .blank{display:inline-block;width:44px;height:44px;line-height:44px;border-bottom:3px dashed #ffb74d;margin:0 4px;vertical-align:middle;font-size:22px;color:#ffd54f;font-weight:700;background:rgba(255,215,0,.08);border-radius:6px 6px 0 0}
+.question-label .spark{display:inline-block;animation:pulse .8s ease infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+.input-row{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.answer-input{width:100px;height:50px;text-align:center;font-size:24px;font-weight:700;border:2px solid rgba(255,180,40,.5);border-radius:12px;background:rgba(255,255,255,.06);color:#ffd54f;outline:none;transition:border-color .25s,box-shadow .25s}
+.answer-input:focus{border-color:#ffb74d;box-shadow:0 0 18px rgba(255,180,40,.35)}
+.answer-input.wrong{border-color:#ff5252!important;animation:shake .4s ease;box-shadow:0 0 14px rgba(255,82,82,.5)!important}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.submit-btn{height:50px;padding:0 28px;font-size:18px;font-weight:700;border:none;border-radius:12px;cursor:pointer;background:linear-gradient(135deg,#ffb74d,#ff8f00);color:#1a1a2e;box-shadow:0 4px 18px rgba(255,143,0,.4);transition:transform .15s,box-shadow .15s;letter-spacing:1px}
+.submit-btn:active{transform:scale(.96);box-shadow:0 2px 10px rgba(255,143,0,.3)}
+.hint-text{font-size:14px;color:#ff5252;margin-top:12px;min-height:22px;font-weight:500}
+.letter-box{margin:14px 0;text-align:left;line-height:2;font-size:clamp(15px,3vw,17px);color:#e0d5c0}
+.letter-box p{text-indent:2em;margin-bottom:10px}
+.letter-box .closing{text-align:right;color:#ffb74d;font-weight:600;margin-top:14px;text-indent:0}
+.wish-card{margin:18px 0;background:rgba(255,215,0,.06);border:1.5px dashed rgba(255,180,40,.35);border-radius:16px;padding:20px 18px;text-align:center;position:relative;overflow:hidden}
+.wish-card .wish-icon{font-size:2.2rem;margin-bottom:6px;animation:float 2.5s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.wish-card .wish-title{font-size:.85rem;color:rgba(255,215,0,.5);letter-spacing:3px;margin-bottom:8px}
+.wish-card .wish-text{font-size:clamp(15px,3vw,18px);color:#ffd54f;font-weight:600;line-height:1.8}
+.wish-star{position:absolute;font-size:12px;animation:twinkle 2s ease-in-out infinite;opacity:0;pointer-events:none}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:.7;transform:scale(1)}}
+.wish-check{margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.wish-check .check-box{width:26px;height:26px;border:2px solid rgba(255,180,40,.4);border-radius:8px;display:flex;align-items:center;justify-content:center;transition:all .3s;font-size:14px;color:transparent}
+.wish-check .check-box.checked{background:rgba(255,180,40,.2);border-color:#ffb74d;color:#ffd54f}
+.wish-check .check-label{font-size:.82rem;color:rgba(255,255,255,.45);letter-spacing:1px}
+.wish-check .check-label.done{color:#ffb74d}
+.signature{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,180,40,.12);font-size:.82rem;color:rgba(255,255,255,.35);letter-spacing:2px}
+.signature span{color:#ffb74d;font-weight:500}
+.blessing{font-size:clamp(14px,2.8vw,16px);color:#ffcc80;margin-top:8px;font-weight:500;border-top:1px solid rgba(255,180,40,.2);padding-top:14px;letter-spacing:1px}
+.back-btn{margin-top:14px;font-size:13px;color:rgba(255,255,255,.45);background:none;border:none;cursor:pointer;text-decoration:underline}
+.credits{position:fixed;bottom:16px;left:0;right:0;text-align:center;z-index:10;font-size:.72rem;color:rgba(255,255,255,.15);letter-spacing:2px;pointer-events:none}
+.credits .heart{color:rgba(255,100,100,.3);animation:pulse 1.5s ease infinite}
+.float-heart{position:fixed;pointer-events:none;z-index:100;font-size:20px;animation:rise 3s ease-out forwards}
+@keyframes rise{0%{opacity:1;transform:translateY(0) rotate(0deg) scale(1)}100%{opacity:0;transform:translateY(-300px) rotate(45deg) scale(.3)}}
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
-<div class="content-rel">
-<div class="hero">
-<div class="badge">👔 父亲节 · 2026</div>
-<h1>爸爸，辛苦了</h1>
-<div class="big-date" id="daysLeft">2</div>
-<div class="date-label">天 后 就 是 父 亲 节</div>
-<div class="countdown-row">
-<div class="cd"><div class="num" id="cd-d">2</div><div class="lbl">天</div></div>
-<div class="cd"><div class="num" id="cd-h">0</div><div class="lbl">时</div></div>
-<div class="cd"><div class="num" id="cd-m">0</div><div class="lbl">分</div></div>
-<div class="cd"><div class="num" id="cd-s">0</div><div class="lbl">秒</div></div>
+<canvas id="firework-canvas"></canvas>
+<div class="page active" id="page1">
+<div class="card">
+<div class="title-main">父亲节快乐</div>
+<div class="title-sub">Happy Father's Day</div>
+<div class="question-box">
+<div class="question-label">从我出生以来，这是您过的<br>第 <span class="blank"><span class="spark">?</span></span> 个父亲节</div>
+<div class="input-row">
+<input type="number" class="answer-input" id="answerInput" placeholder="?" inputmode="numeric" maxlength="2">
+<button class="submit-btn" id="submitBtn">确认</button>
 </div>
-<p class="sub">2026年6月21日 · 星期日</p>
-</div>
-
-<div class="section">
-<div class="card msg-box">
-<h3>✍️ 写给爸爸的话</h3>
-<textarea id="msg" placeholder="爸，有些话当面不好意思说&#10;趁今天写下来……" maxlength="500"></textarea>
-<div class="chars"><span id="charCount">0</span>/500</div>
-<button class="btn btn-primary" id="saveMsg">💛 保存我的心里话</button>
-</div>
-
-<div class="card" id="savedCard" style="display:none">
-<h3>📝 我写给爸爸的话</h3>
-<p id="savedMsg" style="white-space:pre-wrap"></p>
-<button class="btn btn-outline" id="clearMsg">重新写</button>
-</div>
-
-<div class="card" id="fatherDayCard" style="display:none">
-<h3>🎉 今天就是父亲节！</h3>
-<p>别等了，<span class="highlight">现在就去给爸爸打个电话</span>，或者给他一个大大的拥抱吧。</p>
-</div>
-
-<div class="quotes">
-<div class="quote">"父亲是那个不会说爱你，却把最好的都给你的人。"</div>
-<div class="quote">"小时候你牵着我，长大了我扶着你。"<span class="author">—— 致父亲</span></div>
+<div class="hint-text" id="hintText"></div>
 </div>
 </div>
-
-<div class="footer">💙 父亲节快乐 · 2026.06.21</div>
 </div>
-
+<div class="page hidden" id="page2">
+<div class="card">
+<div class="title-thanks">感谢您，亲爱的爸爸</div>
+<div class="letter-box">
+<p>亲爱的爸爸：</p>
+<p>感谢您这么多年为这个家默默付出的一切。您的辛劳，让我们拥有了温暖的港湾；您的包容，让我们在成长中学会了理解与担当。</p>
+<p>父亲节快乐！愿您身体健康，平安喜乐！</p>
+<p class="closing">—— 爱您的孩子</p>
+</div>
+<div class="wish-card" id="wishCard">
+<div class="wish-icon">🌙</div>
+<div class="wish-title">心 愿 卡</div>
+<div class="wish-text">希望爸爸<br><span style="font-size:1.2em">好好睡觉</span><br>每天睡个好觉<br>别再熬夜了 💤</div>
+</div>
+<div class="wish-check" id="wishCheck">
+<div class="check-box" id="checkBox">✓</div>
+<div class="check-label" id="checkLabel">点击承诺：我会监督爸爸早睡</div>
+</div>
+<div class="signature">制作：<span>宋泓霖</span> &amp; <span>宋泓毅</span></div>
+<div class="blessing">🎆 愿时光温柔以待，岁月不再匆匆 🎆</div>
+<button class="back-btn" id="backBtn">← 返回</button>
+</div>
+</div>
+<div class="credits">Made with <span class="heart">♥</span> by 宋泓霖 &amp; 宋泓毅 · 父亲节 2026</div>
 <script>
-/* ====== PARTICLES ====== */
-(function(){var c=document.getElementById("c"),ctx=c.getContext("2d"),w,h,ps=[];
-function rs(){w=c.width=window.innerWidth;h=c.height=window.innerHeight}
-rs();window.addEventListener("resize",rs);
-for(var i=0;i<35;i++){ps.push({x:Math.random()*w,y:Math.random()*h,r:.3+Math.random()*1.2,vx:(Math.random()-.5)*.3,vy:-Math.random()*.5-.2,o:Math.random()*.5+.2})}
-function r(){ctx.clearRect(0,0,w,h);
-for(var i=0;i<ps.length;i++){var p=ps[i];p.x+=p.vx;p.y+=p.vy;p.o+=.002;
-if(p.y<-10){p.y=h+10;p.x=Math.random()*w}
-var a=.5+.5*Math.sin(p.o);ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle="rgba(245,175,25,"+(a*.25)+")";ctx.fill()}
-requestAnimationFrame(r)}r()})();
-
-/* ====== COUNTDOWN ====== */
-var FATHER_DAY=new Date(2026,5,21);
-function pad(n){return n<10?"0"+n:n}
-function updateCD(){
-var n=new Date(),diff=FATHER_DAY-n;
-if(diff<=0){
-document.getElementById("daysLeft").textContent="🎉";
-document.querySelector(".date-label").textContent="今天就是父亲节！";
-document.getElementById("cd-d").textContent="0";document.getElementById("cd-h").textContent="0";document.getElementById("cd-m").textContent="0";document.getElementById("cd-s").textContent="0";
-var fc=document.getElementById("fatherDayCard");if(fc)fc.style.display="block";
-return}
-var d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
-document.getElementById("daysLeft").textContent=d;
-document.getElementById("cd-d").textContent=d;document.getElementById("cd-h").textContent=pad(h);document.getElementById("cd-m").textContent=pad(m);document.getElementById("cd-s").textContent=pad(s)}
-updateCD();setInterval(updateCD,1000);
-
-/* ====== MESSAGE ====== */
-var msgEl=document.getElementById("msg"),savedMsg=document.getElementById("savedMsg"),savedCard=document.getElementById("savedCard");
-msgEl.addEventListener("input",function(){document.getElementById("charCount").textContent=this.value.length});
-var saved=localStorage.getItem("fatherday2026");
-if(saved){savedMsg.textContent=saved;savedCard.style.display="block"}
-document.getElementById("saveMsg").addEventListener("click",function(){
-var v=msgEl.value.trim();if(!v){st("写上几句话再保存吧 😊");return}
-localStorage.setItem("fatherday2026",v);savedMsg.textContent=v;savedCard.style.display="block";st("已保存 💛 父亲节那天给爸爸看");
+(function(){
+var canvas=document.getElementById("firework-canvas"),ctx=canvas.getContext("2d"),W,H;
+function rs(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight}
+window.addEventListener("resize",rs);rs();
+var particles=[],rockets=[];
+var COLS=[[255,80,80],[255,140,50],[255,215,0],[255,180,60],[255,100,150],[255,160,200],[255,200,100],[255,120,80],[255,90,120],[255,180,100],[200,255,100],[100,220,255],[255,150,200],[255,200,150],[255,130,200],[255,170,80]];
+function rd(a,b){return Math.random()*(b-a)+a}
+function ri(a,b){return Math.floor(rd(a,b+1))}
+function pk(a){return a[ri(0,a.length-1)]}
+function lf(){
+var x=rd(W*.1,W*.9),y=H,tx=rd(W*.15,W*.85),ty=rd(H*.08,H*.45),sp=rd(8,14),an=Math.atan2(ty-y,tx-x),vx=Math.cos(an)*sp,vy=Math.sin(an)*sp,tl=ri(6,14),co=pk(COLS);
+rockets.push({x:x,y:y,vx:vx,vy:vy,trail:[],trailLen:tl,color:co,ty:ty})
+}
+function ex(rk){
+var x=rk.x,y=rk.y,co=rk.color,ct=ri(60,110);
+for(var i=0;i<ct;i++){
+var an=rd(0,Math.PI*2),sp=rd(2,9),vx=Math.cos(an)*sp,vy=Math.sin(an)*sp,lf=rd(.7,2.2),sz=rd(1.5,4.5),hs=rd(-25,25);
+var c=[Math.min(255,Math.max(0,co[0]+hs)),Math.min(255,Math.max(0,co[1]+hs)),Math.min(255,Math.max(0,co[2]+hs))];
+particles.push({x:x,y:y,vx:vx,vy:vy,life:lf,age:0,size:sz,color:c,alpha:1,trail:[]})
+}
+}
+function up(dt){
+dt=Math.min(dt,.05);
+for(var i=rockets.length-1;i>=0;i--){
+var r=rockets[i];r.x+=r.vx*dt*60;r.y+=r.vy*dt*60;r.trail.push({x:r.x,y:r.y,alpha:1});
+if(r.trail.length>r.trailLen)r.trail.shift();
+for(var j=0;j<r.trail.length;j++)r.trail[j].alpha*=.88;
+if(r.y<=r.ty||r.y<-20){ex(r);rockets.splice(i,1)}
+}
+for(var i=particles.length-1;i>=0;i--){
+var p=particles[i];p.age+=dt;p.vy+=.35*dt*60;p.x+=p.vx*dt*60;p.y+=p.vy*dt*60;p.alpha=1-(p.age/p.life);
+if(p.alpha<0)p.alpha=0;
+p.trail.push({x:p.x,y:p.y,alpha:p.alpha});if(p.trail.length>5)p.trail.shift();
+if(p.age>=p.life)particles.splice(i,1)
+}
+}
+function dr(){
+ctx.clearRect(0,0,W,H);ctx.fillStyle="rgba(10,10,26,.28)";ctx.fillRect(0,0,W,H);
+for(var i=0;i<rockets.length;i++){
+var r=rockets[i];
+for(var j=0;j<r.trail.length;j++){var t=r.trail[j],a=t.alpha*(j/r.trail.length);ctx.fillStyle="rgba("+r.color[0]+","+r.color[1]+","+r.color[2]+","+(a*.85)+")";ctx.beginPath();ctx.arc(t.x,t.y,2.2,0,Math.PI*2);ctx.fill()}
+ctx.fillStyle="rgba("+r.color[0]+","+r.color[1]+","+r.color[2]+",.95)";ctx.shadowColor="rgba("+r.color[0]+","+r.color[1]+","+r.color[2]+",.7)";ctx.shadowBlur=10;ctx.beginPath();ctx.arc(r.x,r.y,3.5,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0
+}
+for(var i=0;i<particles.length;i++){
+var p=particles[i];
+for(var j=0;j<p.trail.length;j++){var t=p.trail[j],a=t.alpha*(j/p.trail.length)*.6;ctx.fillStyle="rgba("+p.color[0]+","+p.color[1]+","+p.color[2]+","+a+")";ctx.beginPath();ctx.arc(t.x,t.y,p.size*.6,0,Math.PI*2);ctx.fill()}
+ctx.fillStyle="rgba("+p.color[0]+","+p.color[1]+","+p.color[2]+","+p.alpha+")";ctx.shadowColor="rgba("+p.color[0]+","+p.color[1]+","+p.color[2]+","+(p.alpha*.5)+")";ctx.shadowBlur=p.size*1.8;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0
+}
+}
+var pg1=document.getElementById("page1"),pg2=document.getElementById("page2"),ai=document.getElementById("answerInput"),sb=document.getElementById("submitBtn"),ht=document.getElementById("hintText"),bb=document.getElementById("backBtn");
+var cp="page1",fi;
+function sw(to){
+if(to===cp)return;
+if(to==="page2"){pg1.classList.remove("active");pg1.classList.add("hidden");setTimeout(function(){pg2.classList.remove("hidden");pg2.classList.add("active")},50);cp="page2";af("page2")}
+else{pg2.classList.remove("active");pg2.classList.add("hidden");setTimeout(function(){pg1.classList.remove("hidden");pg1.classList.add("active")},50);cp="page1";af("page1")}
+}
+function af(p){clearInterval(fi);var mi=p==="page1"?1800:2800,ma=p==="page1"?3500:5000;fi=setInterval(function(){lf()},ri(mi,ma))}
+sb.addEventListener("click",function(){
+var v=ai.value.trim();
+if(v==="17"){ht.textContent="";ai.classList.remove("wrong");sw("page2")}
+else{ht.textContent="答案不对哦，再想想~";ai.classList.add("wrong");setTimeout(function(){ai.classList.remove("wrong")},420)}
 });
-document.getElementById("clearMsg").addEventListener("click",function(){localStorage.removeItem("fatherday2026");savedCard.style.display="none";msgEl.value="";document.getElementById("charCount").textContent="0";st("已清除")});
-function st(t){var e=document.createElement("div");e.className="toast";e.textContent=t;document.body.appendChild(e);setTimeout(function(){e.remove()},2400)}
+ai.addEventListener("keydown",function(e){if(e.key==="Enter")sb.click()});
+bb.addEventListener("click",function(){ai.value="";ht.textContent="";sw("page1")});
+var wc=document.getElementById("wishCheck"),cb=document.getElementById("checkBox"),cl=document.getElementById("checkLabel");
+wc.addEventListener("click",function(){
+if(cb.classList.contains("checked")){cb.classList.remove("checked");cl.classList.remove("done");cl.textContent="点击承诺：我会监督爸爸早睡"}
+else{cb.classList.add("checked");cl.classList.add("done");cl.textContent="✅ 我承诺：监督爸爸好好睡觉！";for(var i=0;i<12;i++){setTimeout(function(){sh()},i*80)}}
+});
+function sh(){
+var h=document.createElement("div");h.className="float-heart";h.textContent=["💛","❤️","💙","💜","💚"][ri(0,4)];
+h.style.left=rd(20,80)+"%";h.style.top=rd(50,80)+"%";h.style.animationDuration=rd(2,4)+"s";
+document.body.appendChild(h);setTimeout(function(){h.remove()},4000)
+}
+var wcd=document.getElementById("wishCard");
+for(var i=0;i<8;i++){
+var s=document.createElement("span");s.className="wish-star";s.textContent="✨";
+s.style.left=rd(5,90)+"%";s.style.top=rd(5,85)+"%";s.style.animationDelay=rd(0,2)+"s";s.style.animationDuration=rd(1.5,3)+"s";
+wcd.appendChild(s)
+}
+wcd.addEventListener("click",function(){for(var i=0;i<6;i++){setTimeout(function(){sh()},i*60)}});
+var lastTime=performance.now();
+function loop(time){var dt=(time-lastTime)/1000;lastTime=time;up(dt);dr();requestAnimationFrame(loop)}
+function ib(){for(var i=0;i<3;i++){setTimeout(function(){lf()},i*400)}}
+rs();ib();af("page1");requestAnimationFrame(loop);
+})();
 </script>
 </body>
 </html>
