@@ -11,178 +11,174 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
 body{background:#0a0a1a}
-#firework-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
-.page{position:relative;z-index:1;width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:20px;transition:opacity .6s,transform .6s}
+#fw{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.page{position:relative;z-index:1;width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:16px;transition:opacity .6s,transform .6s}
 .page.hidden{display:none;opacity:0;transform:translateY(30px)}
 .page.active{display:flex;opacity:1;transform:translateY(0)}
-.card{background:rgba(10,10,30,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,215,0,.25);border-radius:20px;padding:32px 26px;max-width:460px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.5),0 0 80px rgba(255,180,40,.08)}
-.title-main{font-size:clamp(28px,6vw,46px);font-weight:900;color:#ffd54f;text-shadow:0 0 30px rgba(255,180,40,.6),0 0 60px rgba(255,160,20,.3),0 2px 4px rgba(0,0,0,.5);margin-bottom:6px;letter-spacing:2px}
-.title-sub{font-size:clamp(13px,2.8vw,16px);color:#ffb74d;margin-bottom:10px;font-weight:300;letter-spacing:1px}
-.title-thanks{font-size:clamp(22px,5vw,36px);font-weight:800;color:#ffd54f;text-shadow:0 0 24px rgba(255,180,40,.5),0 0 50px rgba(255,160,20,.25);margin-bottom:4px}
-.question-box{margin:20px 0}
-.question-label{font-size:clamp(16px,3.5vw,20px);color:#ffe0b2;margin-bottom:16px;line-height:1.6;font-weight:500}
-.question-label .blank{display:inline-block;width:44px;height:44px;line-height:44px;border-bottom:3px dashed #ffb74d;margin:0 4px;vertical-align:middle;font-size:22px;color:#ffd54f;font-weight:700;background:rgba(255,215,0,.08);border-radius:6px 6px 0 0}
-.question-label .spark{display:inline-block;animation:pulse .8s ease infinite}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
-.input-row{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
-.answer-input{width:100px;height:50px;text-align:center;font-size:24px;font-weight:700;border:2px solid rgba(255,180,40,.5);border-radius:12px;background:rgba(255,255,255,.06);color:#ffd54f;outline:none;transition:border-color .25s,box-shadow .25s}
-.answer-input:focus{border-color:#ffb74d;box-shadow:0 0 18px rgba(255,180,40,.35)}
-.answer-input.wrong{border-color:#ff5252!important;animation:shake .4s ease;box-shadow:0 0 14px rgba(255,82,82,.5)!important}
-@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
-.submit-btn{height:50px;padding:0 28px;font-size:18px;font-weight:700;border:none;border-radius:12px;cursor:pointer;background:linear-gradient(135deg,#ffb74d,#ff8f00);color:#1a1a2e;box-shadow:0 4px 18px rgba(255,143,0,.4);transition:transform .15s,box-shadow .15s;letter-spacing:1px}
-.submit-btn:active{transform:scale(.96);box-shadow:0 2px 10px rgba(255,143,0,.3)}
-.hint-text{font-size:14px;color:#ff5252;margin-top:12px;min-height:22px;font-weight:500}
-.letter-box{margin:14px 0;text-align:left;line-height:2;font-size:clamp(15px,3vw,17px);color:#e0d5c0}
-.letter-box p{text-indent:2em;margin-bottom:10px}
-.letter-box .closing{text-align:right;color:#ffb74d;font-weight:600;margin-top:14px;text-indent:0}
-.wish-card{margin:18px 0;background:rgba(255,215,0,.06);border:1.5px dashed rgba(255,180,40,.35);border-radius:16px;padding:20px 18px;text-align:center;position:relative;overflow:hidden}
-.wish-card .wish-icon{font-size:2.2rem;margin-bottom:6px;animation:float 2.5s ease-in-out infinite}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.wish-card .wish-title{font-size:.85rem;color:rgba(255,215,0,.5);letter-spacing:3px;margin-bottom:8px}
-.wish-card .wish-text{font-size:clamp(15px,3vw,18px);color:#ffd54f;font-weight:600;line-height:1.8}
-.wish-star{position:absolute;font-size:12px;animation:twinkle 2s ease-in-out infinite;opacity:0;pointer-events:none}
-@keyframes twinkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:.7;transform:scale(1)}}
-.wish-check{margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
-.wish-check .check-box{width:26px;height:26px;border:2px solid rgba(255,180,40,.4);border-radius:8px;display:flex;align-items:center;justify-content:center;transition:all .3s;font-size:14px;color:transparent}
-.wish-check .check-box.checked{background:rgba(255,180,40,.2);border-color:#ffb74d;color:#ffd54f}
-.wish-check .check-label{font-size:.82rem;color:rgba(255,255,255,.45);letter-spacing:1px}
-.wish-check .check-label.done{color:#ffb74d}
-.signature{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,180,40,.12);font-size:.82rem;color:rgba(255,255,255,.35);letter-spacing:2px}
-.signature span{color:#ffb74d;font-weight:500}
-.blessing{font-size:clamp(14px,2.8vw,16px);color:#ffcc80;margin-top:8px;font-weight:500;border-top:1px solid rgba(255,180,40,.2);padding-top:14px;letter-spacing:1px}
-.back-btn{margin-top:14px;font-size:13px;color:rgba(255,255,255,.45);background:none;border:none;cursor:pointer;text-decoration:underline}
-.credits{position:fixed;bottom:16px;left:0;right:0;text-align:center;z-index:10;font-size:.72rem;color:rgba(255,255,255,.15);letter-spacing:2px;pointer-events:none}
-.credits .heart{color:rgba(255,100,100,.3);animation:pulse 1.5s ease infinite}
-.float-heart{position:fixed;pointer-events:none;z-index:100;font-size:20px;animation:rise 3s ease-out forwards}
-@keyframes rise{0%{opacity:1;transform:translateY(0) rotate(0deg) scale(1)}100%{opacity:0;transform:translateY(-300px) rotate(45deg) scale(.3)}}
+.card{background:rgba(10,10,30,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,215,0,.25);border-radius:20px;padding:28px 22px;max-width:480px;width:92%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.5),0 0 80px rgba(255,180,40,.08);max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.card::-webkit-scrollbar{width:3px}
+.card::-webkit-scrollbar-thumb{background:rgba(255,180,40,.2);border-radius:3px}
+.t1{font-size:clamp(28px,6vw,46px);font-weight:900;color:#ffd54f;text-shadow:0 0 30px rgba(255,180,40,.6),0 0 60px rgba(255,160,20,.3);margin-bottom:4px;letter-spacing:2px}
+.t2{font-size:clamp(13px,2.8vw,16px);color:#ffb74d;margin-bottom:10px;font-weight:300;letter-spacing:1px}
+.t3{font-size:clamp(22px,5vw,36px);font-weight:800;color:#ffd54f;text-shadow:0 0 24px rgba(255,180,40,.5);margin-bottom:4px}
+.qb{margin:18px 0}
+.ql{font-size:clamp(16px,3.5vw,20px);color:#ffe0b2;margin-bottom:14px;line-height:1.6;font-weight:500}
+.ql .bk{display:inline-block;width:44px;height:44px;line-height:44px;border-bottom:3px dashed #ffb74d;margin:0 4px;vertical-align:middle;font-size:22px;color:#ffd54f;font-weight:700;background:rgba(255,215,0,.08);border-radius:6px 6px 0 0}
+.spk{display:inline-block;animation:pk .8s ease infinite}
+@keyframes pk{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+.ir{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.ai{width:100px;height:50px;text-align:center;font-size:24px;font-weight:700;border:2px solid rgba(255,180,40,.5);border-radius:12px;background:rgba(255,255,255,.06);color:#ffd54f;outline:none;transition:border-color .25s,box-shadow .25s}
+.ai:focus{border-color:#ffb74d;box-shadow:0 0 18px rgba(255,180,40,.35)}
+.ai.wr{border-color:#ff5252!important;animation:sh .4s ease;box-shadow:0 0 14px rgba(255,82,82,.5)!important}
+@keyframes sh{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.sb{height:50px;padding:0 28px;font-size:18px;font-weight:700;border:none;border-radius:12px;cursor:pointer;background:linear-gradient(135deg,#ffb74d,#ff8f00);color:#1a1a2e;box-shadow:0 4px 18px rgba(255,143,0,.4);transition:transform .15s;letter-spacing:1px}
+.sb:active{transform:scale(.96)}
+.ht{font-size:14px;color:#ff5252;margin-top:10px;min-height:20px;font-weight:500}
+.lb{margin:12px 0;text-align:left;line-height:2;font-size:clamp(14px,2.8vw,16px);color:#e0d5c0}
+.lb p{text-indent:2em;margin-bottom:8px}
+.lb .cl{text-align:right;color:#ffb74d;font-weight:600;margin-top:12px;text-indent:0}
+.wc{margin:16px 0;background:rgba(255,215,0,.06);border:1.5px dashed rgba(255,180,40,.35);border-radius:16px;padding:18px 16px;text-align:center;position:relative;overflow:hidden;cursor:pointer;transition:all .3s}
+.wc:active{background:rgba(255,215,0,.12);transform:scale(.98)}
+.wc .wi{font-size:2.2rem;margin-bottom:4px;animation:fl 2.5s ease-in-out infinite}
+@keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.wc .wt{font-size:.8rem;color:rgba(255,215,0,.5);letter-spacing:3px;margin-bottom:6px}
+.wc .wx{font-size:clamp(15px,3vw,18px);color:#ffd54f;font-weight:600;line-height:1.8}
+.ws{position:absolute;font-size:12px;animation:tk 2s ease-in-out infinite;opacity:0;pointer-events:none}
+@keyframes tk{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:.7;transform:scale(1)}}
+.ck{margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.ck .cb{width:26px;height:26px;border:2px solid rgba(255,180,40,.4);border-radius:8px;display:flex;align-items:center;justify-content:center;transition:all .3s;font-size:14px;color:transparent}
+.ck .cb.on{background:rgba(255,180,40,.2);border-color:#ffb74d;color:#ffd54f}
+.ck .cl{font-size:.8rem;color:rgba(255,255,255,.45);letter-spacing:1px}
+.ck .cl.on{color:#ffb74d}
+.hug-zone{margin:12px 0;padding:14px;background:rgba(255,100,100,.04);border-radius:14px;border:1px solid rgba(255,100,100,.15);text-align:center}
+.hug-zone .hug-icon{font-size:2.5rem;cursor:pointer;display:inline-block;animation:fl 2s ease-in-out infinite;transition:transform .2s}
+.hug-zone .hug-icon:active{transform:scale(1.4)}
+.hug-zone .hug-count{font-size:.8rem;color:rgba(255,180,180,.4);margin-top:4px}
+.hug-zone .hug-msg{font-size:.75rem;color:rgba(255,255,255,.25);margin-top:2px;min-height:18px}
+.tap-area{position:relative;margin:10px 0;padding:16px;background:rgba(100,180,255,.04);border-radius:14px;border:1px solid rgba(100,180,255,.15)}
+.tap-area .tap-title{font-size:.78rem;color:rgba(100,180,255,.5);letter-spacing:2px;margin-bottom:6px}
+.tap-area .tap-canvas{width:100%;height:60px;position:relative;cursor:pointer}
+.tap-dot{position:absolute;width:8px;height:8px;border-radius:50%;background:#ffd54f;animation:pop .6s ease-out forwards;pointer-events:none}
+@keyframes pop{0%{transform:scale(0);opacity:1}100%{transform:scale(3);opacity:0}}
+.clist{margin:10px 0;text-align:left}
+.clist .ci{display:flex;align-items:center;gap:10px;padding:10px 14px;margin-bottom:6px;background:rgba(255,255,255,.02);border-radius:10px;cursor:pointer;transition:all .2s}
+.clist .ci:active{background:rgba(255,255,255,.05)}
+.clist .ci .ico{font-size:1.3rem;transition:transform .3s}
+.clist .ci .ico.done{transform:scale(1.2)}
+.clist .ci .ct{flex:1;font-size:.82rem;color:rgba(255,255,255,.4);text-align:left}
+.clist .ci .ct.done{color:rgba(255,255,255,.7);text-decoration:line-through rgba(255,180,40,.3)}
+.sig{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,180,40,.12);font-size:.8rem;color:rgba(255,255,255,.3);letter-spacing:2px}
+.sig span{color:#ffb74d;font-weight:500}
+.bl{font-size:clamp(13px,2.6vw,15px);color:#ffcc80;margin-top:6px;font-weight:500;border-top:1px solid rgba(255,180,40,.2);padding-top:10px;letter-spacing:1px}
+.bb{margin-top:10px;font-size:13px;color:rgba(255,255,255,.4);background:none;border:none;cursor:pointer;text-decoration:underline}
+.cr{position:fixed;bottom:12px;left:0;right:0;text-align:center;z-index:10;font-size:.7rem;color:rgba(255,255,255,.12);letter-spacing:2px;pointer-events:none}
+.cr .h{color:rgba(255,100,100,.25);animation:pk 1.5s ease infinite}
+.fh{position:fixed;pointer-events:none;z-index:100;font-size:20px;animation:rs 3s ease-out forwards}
+@keyframes rs{0%{opacity:1;transform:translateY(0) rotate(0deg) scale(1)}100%{opacity:0;transform:translateY(-300px) rotate(45deg) scale(.3)}}
+.toast{position:fixed;top:30%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.8);color:#ffd54f;padding:10px 24px;border-radius:20px;font-size:.85rem;z-index:200;pointer-events:none;animation:ft .3s ease}
+@keyframes ft{from{opacity:0;transform:translate(-50%,-50%) scale(.8)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 </style>
 </head>
 <body>
-<canvas id="firework-canvas"></canvas>
-<div class="page active" id="page1">
+<canvas id="fw"></canvas>
+
+<div class="page active" id="p1">
 <div class="card">
-<div class="title-main">父亲节快乐</div>
-<div class="title-sub">Happy Father's Day</div>
-<div class="question-box">
-<div class="question-label">从我出生以来，这是您过的<br>第 <span class="blank"><span class="spark">?</span></span> 个父亲节</div>
-<div class="input-row">
-<input type="number" class="answer-input" id="answerInput" placeholder="?" inputmode="numeric" maxlength="2">
-<button class="submit-btn" id="submitBtn">确认</button>
+<div class="t1">父亲节快乐</div>
+<div class="t2">Happy Father's Day</div>
+<div class="qb">
+<div class="ql">从我出生以来，这是您过的<br>第 <span class="bk"><span class="spk">?</span></span> 个父亲节</div>
+<div class="ir">
+<input type="number" class="ai" id="ai" placeholder="?" inputmode="numeric" maxlength="2">
+<button class="sb" id="sb">确认</button>
 </div>
-<div class="hint-text" id="hintText"></div>
+<div class="ht" id="ht"></div>
 </div>
 </div>
 </div>
-<div class="page hidden" id="page2">
+
+<div class="page hidden" id="p2">
 <div class="card">
-<div class="title-thanks">感谢您，亲爱的爸爸</div>
-<div class="letter-box">
+<div class="t3">感谢您，亲爱的爸爸</div>
+<div class="lb">
 <p>亲爱的爸爸：</p>
-<p>感谢您这么多年为这个家默默付出的一切。您的辛劳，让我们拥有了温暖的港湾；您的包容，让我们在成长中学会了理解与担当。</p>
-<p>父亲节快乐！愿您身体健康，平安喜乐！</p>
-<p class="closing">—— 爱您的孩子</p>
+<p>今天是父亲节，我想认真地跟您说一声谢谢。</p>
+<p>这么多年，您总是默默地把家里的大事小事都扛在肩上。清晨最早起床的是您，深夜最后关灯的还是您。您从来没有说过累，但我们都知道，您只是习惯了把辛苦藏在心里。</p>
+<p>您教会我们的，不只是知识和道理。您用每一天的行动告诉我们什么是责任、什么是坚持、什么是爱。您可能不太会表达，但您的爱我们一直都感受得到——在每一次接送的路上，在每一顿热乎的饭菜里，在每一个默默注视的眼神中。</p>
+<p>时光过得真快，我们在长大，您也在变老。但不管岁月怎么流转，您永远是我们心中最了不起的人。</p>
+<p>父亲节快乐！愿您身体健康，平安喜乐。也请您对自己好一点——多休息，少操劳。</p>
+<p class="cl">—— 永远爱您的孩子</p>
 </div>
-<div class="wish-card" id="wishCard">
-<div class="wish-icon">🌙</div>
-<div class="wish-title">心 愿 卡</div>
-<div class="wish-text">希望爸爸<br><span style="font-size:1.2em">好好睡觉</span><br>每天睡个好觉<br>别再熬夜了 💤</div>
+
+<div class="wc" id="wc">
+<div class="wi">🌙</div>
+<div class="wt">心 愿 卡</div>
+<div class="wx">希望爸爸<br><span style="font-size:1.2em">好好睡觉</span><br>每天睡个好觉<br>别再熬夜了 💤</div>
 </div>
-<div class="wish-check" id="wishCheck">
-<div class="check-box" id="checkBox">✓</div>
-<div class="check-label" id="checkLabel">点击承诺：我会监督爸爸早睡</div>
+
+<div class="ck" id="ck">
+<div class="cb" id="cb">✓</div>
+<div class="cl" id="cl">点击承诺：我会监督爸爸早睡</div>
 </div>
-<div class="signature">制作：<span>宋泓霖</span> &amp; <span>宋泓毅</span></div>
-<div class="blessing">🎆 愿时光温柔以待，岁月不再匆匆 🎆</div>
-<button class="back-btn" id="backBtn">← 返回</button>
+
+<div class="hug-zone">
+<div class="hug-icon" id="hugBtn">🤗</div>
+<div class="hug-count">已经给爸爸 <span id="hugNum" style="color:#ffb74d;font-weight:700">0</span> 个拥抱</div>
+<div class="hug-msg" id="hugMsg">点上面的抱抱，送给爸爸</div>
+</div>
+
+<div class="tap-area" id="tapArea">
+<div class="tap-title">✨ 为爸爸点亮星空</div>
+<div class="tap-canvas" id="tapCanvas"></div>
+</div>
+
+<div class="clist">
+<div class="ci" data-done="0"><span class="ico">⬜</span><span class="ct">今天给爸爸打个电话</span></div>
+<div class="ci" data-done="0"><span class="ico">⬜</span><span class="ct">跟爸爸说一句"辛苦了"</span></div>
+<div class="ci" data-done="0"><span class="ico">⬜</span><span class="ct">提醒爸爸早点睡觉</span></div>
+<div class="ci" data-done="0"><span class="ico">⬜</span><span class="ct">陪爸爸吃一顿饭</span></div>
+</div>
+
+<div class="sig">制作：<span>宋泓霖</span> &amp; <span>宋泓毅</span></div>
+<div class="bl">🎆 愿时光温柔以待，岁月不再匆匆 🎆</div>
+<button class="bb" id="bb">← 返回</button>
 </div>
 </div>
-<div class="credits">Made with <span class="heart">♥</span> by 宋泓霖 &amp; 宋泓毅 · 父亲节 2026</div>
+
+<div class="cr">Made with <span class="h">♥</span> by 宋泓霖 &amp; 宋泓毅 · 父亲节 2026</div>
+
 <script>
 (function(){
-var canvas=document.getElementById("firework-canvas"),ctx=canvas.getContext("2d"),W,H;
-function rs(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight}
+var c=document.getElementById("fw"),x=c.getContext("2d"),W,H;
+function rs(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}
 window.addEventListener("resize",rs);rs();
-var particles=[],rockets=[];
-var COLS=[[255,80,80],[255,140,50],[255,215,0],[255,180,60],[255,100,150],[255,160,200],[255,200,100],[255,120,80],[255,90,120],[255,180,100],[200,255,100],[100,220,255],[255,150,200],[255,200,150],[255,130,200],[255,170,80]];
+var ps=[],rk=[];
+var CO=[[255,80,80],[255,140,50],[255,215,0],[255,180,60],[255,100,150],[255,160,200],[255,200,100],[255,120,80],[255,90,120],[255,180,100],[200,255,100],[100,220,255],[255,150,200],[255,200,150],[255,130,200],[255,170,80]];
 function rd(a,b){return Math.random()*(b-a)+a}
 function ri(a,b){return Math.floor(rd(a,b+1))}
 function pk(a){return a[ri(0,a.length-1)]}
-function lf(){
-var x=rd(W*.1,W*.9),y=H,tx=rd(W*.15,W*.85),ty=rd(H*.08,H*.45),sp=rd(8,14),an=Math.atan2(ty-y,tx-x),vx=Math.cos(an)*sp,vy=Math.sin(an)*sp,tl=ri(6,14),co=pk(COLS);
-rockets.push({x:x,y:y,vx:vx,vy:vy,trail:[],trailLen:tl,color:co,ty:ty})
-}
-function ex(rk){
-var x=rk.x,y=rk.y,co=rk.color,ct=ri(60,110);
-for(var i=0;i<ct;i++){
-var an=rd(0,Math.PI*2),sp=rd(2,9),vx=Math.cos(an)*sp,vy=Math.sin(an)*sp,lf=rd(.7,2.2),sz=rd(1.5,4.5),hs=rd(-25,25);
-var c=[Math.min(255,Math.max(0,co[0]+hs)),Math.min(255,Math.max(0,co[1]+hs)),Math.min(255,Math.max(0,co[2]+hs))];
-particles.push({x:x,y:y,vx:vx,vy:vy,life:lf,age:0,size:sz,color:c,alpha:1,trail:[]})
-}
-}
-function up(dt){
-dt=Math.min(dt,.05);
-for(var i=rockets.length-1;i>=0;i--){
-var r=rockets[i];r.x+=r.vx*dt*60;r.y+=r.vy*dt*60;r.trail.push({x:r.x,y:r.y,alpha:1});
-if(r.trail.length>r.trailLen)r.trail.shift();
-for(var j=0;j<r.trail.length;j++)r.trail[j].alpha*=.88;
-if(r.y<=r.ty||r.y<-20){ex(r);rockets.splice(i,1)}
-}
-for(var i=particles.length-1;i>=0;i--){
-var p=particles[i];p.age+=dt;p.vy+=.35*dt*60;p.x+=p.vx*dt*60;p.y+=p.vy*dt*60;p.alpha=1-(p.age/p.life);
-if(p.alpha<0)p.alpha=0;
-p.trail.push({x:p.x,y:p.y,alpha:p.alpha});if(p.trail.length>5)p.trail.shift();
-if(p.age>=p.life)particles.splice(i,1)
-}
-}
-function dr(){
-ctx.clearRect(0,0,W,H);ctx.fillStyle="rgba(10,10,26,.28)";ctx.fillRect(0,0,W,H);
-for(var i=0;i<rockets.length;i++){
-var r=rockets[i];
-for(var j=0;j<r.trail.length;j++){var t=r.trail[j],a=t.alpha*(j/r.trail.length);ctx.fillStyle="rgba("+r.color[0]+","+r.color[1]+","+r.color[2]+","+(a*.85)+")";ctx.beginPath();ctx.arc(t.x,t.y,2.2,0,Math.PI*2);ctx.fill()}
-ctx.fillStyle="rgba("+r.color[0]+","+r.color[1]+","+r.color[2]+",.95)";ctx.shadowColor="rgba("+r.color[0]+","+r.color[1]+","+r.color[2]+",.7)";ctx.shadowBlur=10;ctx.beginPath();ctx.arc(r.x,r.y,3.5,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0
-}
-for(var i=0;i<particles.length;i++){
-var p=particles[i];
-for(var j=0;j<p.trail.length;j++){var t=p.trail[j],a=t.alpha*(j/p.trail.length)*.6;ctx.fillStyle="rgba("+p.color[0]+","+p.color[1]+","+p.color[2]+","+a+")";ctx.beginPath();ctx.arc(t.x,t.y,p.size*.6,0,Math.PI*2);ctx.fill()}
-ctx.fillStyle="rgba("+p.color[0]+","+p.color[1]+","+p.color[2]+","+p.alpha+")";ctx.shadowColor="rgba("+p.color[0]+","+p.color[1]+","+p.color[2]+","+(p.alpha*.5)+")";ctx.shadowBlur=p.size*1.8;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0
-}
-}
-var pg1=document.getElementById("page1"),pg2=document.getElementById("page2"),ai=document.getElementById("answerInput"),sb=document.getElementById("submitBtn"),ht=document.getElementById("hintText"),bb=document.getElementById("backBtn");
-var cp="page1",fi;
-function sw(to){
-if(to===cp)return;
-if(to==="page2"){pg1.classList.remove("active");pg1.classList.add("hidden");setTimeout(function(){pg2.classList.remove("hidden");pg2.classList.add("active")},50);cp="page2";af("page2")}
-else{pg2.classList.remove("active");pg2.classList.add("hidden");setTimeout(function(){pg1.classList.remove("hidden");pg1.classList.add("active")},50);cp="page1";af("page1")}
-}
-function af(p){clearInterval(fi);var mi=p==="page1"?1800:2800,ma=p==="page1"?3500:5000;fi=setInterval(function(){lf()},ri(mi,ma))}
-sb.addEventListener("click",function(){
-var v=ai.value.trim();
-if(v==="17"){ht.textContent="";ai.classList.remove("wrong");sw("page2")}
-else{ht.textContent="答案不对哦，再想想~";ai.classList.add("wrong");setTimeout(function(){ai.classList.remove("wrong")},420)}
-});
-ai.addEventListener("keydown",function(e){if(e.key==="Enter")sb.click()});
-bb.addEventListener("click",function(){ai.value="";ht.textContent="";sw("page1")});
-var wc=document.getElementById("wishCheck"),cb=document.getElementById("checkBox"),cl=document.getElementById("checkLabel");
-wc.addEventListener("click",function(){
-if(cb.classList.contains("checked")){cb.classList.remove("checked");cl.classList.remove("done");cl.textContent="点击承诺：我会监督爸爸早睡"}
-else{cb.classList.add("checked");cl.classList.add("done");cl.textContent="✅ 我承诺：监督爸爸好好睡觉！";for(var i=0;i<12;i++){setTimeout(function(){sh()},i*80)}}
-});
-function sh(){
-var h=document.createElement("div");h.className="float-heart";h.textContent=["💛","❤️","💙","💜","💚"][ri(0,4)];
-h.style.left=rd(20,80)+"%";h.style.top=rd(50,80)+"%";h.style.animationDuration=rd(2,4)+"s";
-document.body.appendChild(h);setTimeout(function(){h.remove()},4000)
-}
-var wcd=document.getElementById("wishCard");
-for(var i=0;i<8;i++){
-var s=document.createElement("span");s.className="wish-star";s.textContent="✨";
-s.style.left=rd(5,90)+"%";s.style.top=rd(5,85)+"%";s.style.animationDelay=rd(0,2)+"s";s.style.animationDuration=rd(1.5,3)+"s";
-wcd.appendChild(s)
-}
-wcd.addEventListener("click",function(){for(var i=0;i<6;i++){setTimeout(function(){sh()},i*60)}});
-var lastTime=performance.now();
-function loop(time){var dt=(time-lastTime)/1000;lastTime=time;up(dt);dr();requestAnimationFrame(loop)}
-function ib(){for(var i=0;i<3;i++){setTimeout(function(){lf()},i*400)}}
-rs();ib();af("page1");requestAnimationFrame(loop);
+function lf(){var x=rd(W*.1,W*.9),y=H,tx=rd(W*.15,W*.85),ty=rd(H*.08,H*.45),sp=rd(8,14),an=Math.atan2(ty-y,tx-x),vx=Math.cos(an)*sp,vy=Math.sin(an)*sp,tl=ri(6,14),co=pk(CO);rk.push({x:x,y:y,vx:vx,vy:vy,trail:[],trailLen:tl,color:co,ty:ty})}
+function ex(rk0){var x=rk0.x,y=rk0.y,co=rk0.color,ct=ri(60,110);for(var i=0;i<ct;i++){var an=rd(0,Math.PI*2),sp=rd(2,9),vx=Math.cos(an)*sp,vy=Math.sin(an)*sp,lf0=rd(.7,2.2),sz=rd(1.5,4.5),hs=rd(-25,25);var cc=[Math.min(255,Math.max(0,co[0]+hs)),Math.min(255,Math.max(0,co[1]+hs)),Math.min(255,Math.max(0,co[2]+hs))];ps.push({x:x,y:y,vx:vx,vy:vy,life:lf0,age:0,size:sz,color:cc,alpha:1,trail:[]})}}
+function up(dt){dt=Math.min(dt,.05);for(var i=rk.length-1;i>=0;i--){var r=rk[i];r.x+=r.vx*dt*60;r.y+=r.vy*dt*60;r.trail.push({x:r.x,y:r.y,alpha:1});if(r.trail.length>r.trailLen)r.trail.shift();for(var j=0;j<r.trail.length;j++)r.trail[j].alpha*=.88;if(r.y<=r.ty||r.y<-20){ex(r);rk.splice(i,1)}}for(var i=ps.length-1;i>=0;i--){var p=ps[i];p.age+=dt;p.vy+=.35*dt*60;p.x+=p.vx*dt*60;p.y+=p.vy*dt*60;p.alpha=1-(p.age/p.life);if(p.alpha<0)p.alpha=0;p.trail.push({x:p.x,y:p.y,alpha:p.alpha});if(p.trail.length>5)p.trail.shift();if(p.age>=p.life)ps.splice(i,1)}}
+function dr(){x.clearRect(0,0,W,H);x.fillStyle="rgba(10,10,26,.28)";x.fillRect(0,0,W,H);for(var i=0;i<rk.length;i++){var r=rk[i];for(var j=0;j<r.trail.length;j++){var t=r.trail[j],a=t.alpha*(j/r.trail.length);x.fillStyle="rgba("+r.color[0]+","+r.color[1]+","+r.color[2]+","+(a*.85)+")";x.beginPath();x.arc(t.x,t.y,2.2,0,Math.PI*2);x.fill()}x.fillStyle="rgba("+r.color[0]+","+r.color[1]+","+r.color[2]+",.95)";x.shadowColor="rgba("+r.color[0]+","+r.color[1]+","+r.color[2]+",.7)";x.shadowBlur=10;x.beginPath();x.arc(r.x,r.y,3.5,0,Math.PI*2);x.fill();x.shadowBlur=0}for(var i=0;i<ps.length;i++){var p=ps[i];for(var j=0;j<p.trail.length;j++){var t=p.trail[j],a=t.alpha*(j/p.trail.length)*.6;x.fillStyle="rgba("+p.color[0]+","+p.color[1]+","+p.color[2]+","+a+")";x.beginPath();x.arc(t.x,t.y,p.size*.6,0,Math.PI*2);x.fill()}x.fillStyle="rgba("+p.color[0]+","+p.color[1]+","+p.color[2]+","+p.alpha+")";x.shadowColor="rgba("+p.color[0]+","+p.color[1]+","+p.color[2]+","+(p.alpha*.5)+")";x.shadowBlur=p.size*1.8;x.beginPath();x.arc(p.x,p.y,p.size,0,Math.PI*2);x.fill();x.shadowBlur=0}}
+var p1=document.getElementById("p1"),p2=document.getElementById("p2"),ai=document.getElementById("ai"),sb=document.getElementById("sb"),ht=document.getElementById("ht"),bb=document.getElementById("bb");var cp="p1",fi;
+function sw(to){if(to===cp)return;if(to==="p2"){p1.classList.remove("active");p1.classList.add("hidden");setTimeout(function(){p2.classList.remove("hidden");p2.classList.add("active")},50);cp="p2";af("p2")}else{p2.classList.remove("active");p2.classList.add("hidden");setTimeout(function(){p1.classList.remove("hidden");p1.classList.add("active")},50);cp="p1";af("p1")}}
+function af(pg){clearInterval(fi);var mi=pg==="p1"?1800:2800,ma=pg==="p1"?3500:5000;fi=setInterval(function(){lf()},ri(mi,ma))}
+sb.addEventListener("click",function(){var v=ai.value.trim();if(v==="17"){ht.textContent="";ai.classList.remove("wr");sw("p2")}else{ht.textContent="答案不对哦，再想想~";ai.classList.add("wr");setTimeout(function(){ai.classList.remove("wr")},420)}});ai.addEventListener("keydown",function(e){if(e.key==="Enter")sb.click()});bb.addEventListener("click",function(){ai.value="";ht.textContent="";sw("p1")});
+
+var ck=document.getElementById("ck"),cb=document.getElementById("cb"),cl=document.getElementById("cl");
+ck.addEventListener("click",function(){if(cb.classList.contains("on")){cb.classList.remove("on");cl.classList.remove("on");cl.textContent="点击承诺：我会监督爸爸早睡"}else{cb.classList.add("on");cl.classList.add("on");cl.textContent="✅ 我承诺：监督爸爸好好睡觉！";for(var i=0;i<12;i++){setTimeout(function(){sh()},i*80)}}});
+function sh(){var h=document.createElement("div");h.className="fh";h.textContent=["💛","❤️","💙","💜","💚"][ri(0,4)];h.style.left=rd(20,80)+"%";h.style.top=rd(50,80)+"%";h.style.animationDuration=rd(2,4)+"s";document.body.appendChild(h);setTimeout(function(){h.remove()},4000)}
+var wc=document.getElementById("wc");for(var i=0;i<8;i++){var s=document.createElement("span");s.className="ws";s.textContent="✨";s.style.left=rd(5,90)+"%";s.style.top=rd(5,85)+"%";s.style.animationDelay=rd(0,2)+"s";s.style.animationDuration=rd(1.5,3)+"s";wc.appendChild(s)}wc.addEventListener("click",function(){for(var i=0;i<6;i++){setTimeout(function(){sh()},i*60)}});
+
+var hugNum=0,hugBtn=document.getElementById("hugBtn"),hugNumEl=document.getElementById("hugNum"),hugMsgEl=document.getElementById("hugMsg");var hugMsgs=["再抱一个！","好温暖的拥抱 💛","爸爸一定很开心","抱抱不能停！","这个拥抱超大的！","爸爸收到啦！","继续抱～","爱意满满 💙"];hugBtn.addEventListener("click",function(){hugNum++;hugNumEl.textContent=hugNum;hugMsgEl.textContent=hugMsgs[Math.min(hugNum-1,hugMsgs.length-1)];sh();sh();if(hugNum%5===0){st("🎉 已经送了 "+hugNum+" 个拥抱！")}});
+
+var tapCanvas=document.getElementById("tapCanvas");tapCanvas.addEventListener("click",function(e){var rect=tapCanvas.getBoundingClientRect();var mx=e.clientX-rect.left,my=e.clientY-rect.top;for(var i=0;i<3;i++){var d=document.createElement("div");d.className="tap-dot";d.style.left=(mx+rd(-8,8))+"px";d.style.top=(my+rd(-8,8))+"px";d.style.background=pk(["#ffd54f","#ffb74d","#ffcc80","#ffe0b2","#fff"]);d.style.animationDuration=rd(.4,.9)+"s";tapCanvas.appendChild(d);setTimeout(function(){d.remove()},900)}if(Math.random()<.3)sh()});
+
+var items=document.querySelectorAll(".clist .ci");items.forEach(function(ci){ci.addEventListener("click",function(){var done=ci.getAttribute("data-done")==="1";var ico=ci.querySelector(".ico"),ct=ci.querySelector(".ct");if(done){ci.setAttribute("data-done","0");ico.textContent="⬜";ico.classList.remove("done");ct.classList.remove("done")}else{ci.setAttribute("data-done","1");ico.textContent="✅";ico.classList.add("done");ct.classList.add("done");sh();sh();st("太棒了！")}})});
+function st(t){var e=document.createElement("div");e.className="toast";e.textContent=t;document.body.appendChild(e);setTimeout(function(){e.style.opacity="0";e.style.transition="opacity .5s";setTimeout(function(){e.remove()},500)},1500)}
+
+var lastTime=performance.now();function loop(time){var dt=(time-lastTime)/1000;lastTime=time;up(dt);dr();requestAnimationFrame(loop)}function ib(){for(var i=0;i<3;i++){setTimeout(function(){lf()},i*400)}}rs();ib();af("p1");requestAnimationFrame(loop);
 })();
 </script>
 </body>
