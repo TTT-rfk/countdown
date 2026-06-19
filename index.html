@@ -108,7 +108,7 @@ function createCapsule(item,idx){
   var r=Math.max(rect.width,rect.height)/2+6;
   var cap={
     el:el, x:Math.random()*(cW-2*r)+r, y:Math.random()*(cH-2*r-90)+r,
-    vx:(Math.random()-0.5)*1.5, vy:(Math.random()-0.5)*1.5,
+    vx:(Math.random()-0.5)*0.8, vy:(Math.random()-0.5)*0.8,
     r:r, mass:r*r, item:item, idx:idx
   };
   el.style.left=(cap.x-r)+"px";el.style.top=(cap.y-r)+"px";
@@ -122,12 +122,12 @@ function updatePhysics(){
   for(var i=0;i<capsules.length;i++){
     var ci=capsules[i];
     // gravity
-    ci.vx+=gx*0.15;ci.vy+=gy*0.15;
+    ci.vx += gx * 0.04; ci.vy += gy * 0.04;
     // damping
-    ci.vx*=0.995;ci.vy*=0.995;
+    ci.vx *= 0.998; ci.vy *= 0.998;
     // speed limit
-    var sp=Math.sqrt(ci.vx*ci.vx+ci.vy*ci.vy);
-    if(sp>4){ci.vx=ci.vx/sp*4;ci.vy=ci.vy/sp*4}
+    var sp = Math.sqrt(ci.vx*ci.vx + ci.vy*ci.vy);
+    if (sp > 3) { ci.vx = ci.vx/sp*3; ci.vy = ci.vy/sp*3; }
     // update position
     ci.x+=ci.vx;ci.y+=ci.vy;
     // boundary bounce
@@ -222,6 +222,8 @@ function updateDetailIfOpen(){
 
 function closeDetail(){
   detailOpenIdx=-1;
+  // restore capsule speeds (were multiplied by0.3 in openDetail)
+  for(var i=0;i<capsules.length;i++){capsules[i].vx/=0.3;capsules[i].vy/=0.3;}
   E("detailView").classList.add("hidden");
 }
 
@@ -275,8 +277,15 @@ function sg(){
   }
 }
 function lo(){
+  var _tgx=0,_tgy=0.05;
   window.addEventListener("deviceorientation",function(e){
-    gx=(e.gamma||0)/45;gy=((e.beta||0)-30)/45+0.08;
+    // invert gamma: tilt left → drift left (natural feel)
+    _tgx = -(e.gamma||0) / 70;
+    // beta centered around 60° (normal phone-hold angle)
+    _tgy = ((e.beta||0) - 60) / 100 + 0.05;
+    // smooth interpolation (low-pass filter, prevents jitter)
+    gx += (_tgx - gx) * 0.06;
+    gy += (_tgy - gy) * 0.06;
     gravActive=true;
     var h=E("gravityHint");if(h){h.style.opacity="0";setTimeout(function(){h.remove()},1000)}
   });
