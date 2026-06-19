@@ -1,9 +1,12 @@
 <![CDATA[<!DOCTYPE html><html lang="zh-CN"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#06060f"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json"><link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%23a78bfa'/><text x='16' y='22' text-anchor='middle' font-size='18'>⏳</text></svg>">
 <title>时间胶囊 · 倒数日</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#06060f;color:#fff;font-family:"PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden;touch-action:manipulation;position:fixed;top:0;left:0;right:0;bottom:0}
+body{background:#06060f;color:#fff;font-family:"PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden;touch-action:manipulation;position:fixed;top:0;left:0;right:0;bottom:0;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 #bgCanvas{position:fixed;top:-10%;left:-10%;width:120%;height:120%;z-index:0;pointer-events:none}
 
 /* === CAPSULE: days-centered design === */
@@ -254,6 +257,11 @@ E("shareBtn").addEventListener("click",function(){if(detailOpenIdx<0)return;var 
 E("detailView").addEventListener("click",function(e){if(e.target===this&&!e.target.closest("button")){burst(COLORS[L()[detailOpenIdx]?.color]?.hex||"#a78bfa",25)}});addEventListener("resize",function(){cW=innerWidth;cH=innerHeight});
 
 /* ====== INIT ====== */
+// register service worker for offline PWA
+if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js")}
+// Android back button: close detail/modal first
+window.addEventListener("popstate",function(){if(detailOpenIdx>=0){closeDetail()}else if(!E("modalOverlay").classList.contains("hidden")){hm()}});
+history.pushState(null,"",location.href);
 sg();rebuildAll();_raf=requestAnimationFrame(renderLoop);
 (function init(){var h=location.hash.slice(1);if(h){try{var item=JSON.parse(decodeURIComponent(escape(atob(h))));if(item&&item.title&&item.date){var items=L(),found=-1;for(var i=0;i<items.length;i++){if(items[i].title===item.title&&items[i].date===item.date){found=i;break}}if(found<0){items.push(item);S(items);rebuildAll();found=items.length-1}openDetail(found);return;}}catch(e){}}})();
 setInterval(function(){if(detailOpenIdx>=0)updateDetailIfOpen();var items=L();for(var i=0;i<capsules.length;i++){var cap=capsules[i];if(cap.idx>=items.length)continue;var item=items[cap.idx],co=COLORS[item.color]||COLORS.purple;var d=new Date(item.date);d.setHours(0,0,0,0);var n=new Date();n.setHours(0,0,0,0);var days=db(n,d),ip=days<0,ad=Math.abs(days);var lb=ip?"天前":"天后";if(days===0){lb="今天";ad="今";}cap.el.querySelector(".cap-days").textContent=ad;cap.el.querySelector(".cap-label").textContent=lb;cap.el.querySelector(".cap-days").style.color=co.hex;}},60000);
