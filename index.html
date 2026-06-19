@@ -12,8 +12,8 @@ body{background:#06060f;color:#fff;font-family:"PingFang SC","Microsoft YaHei",s
 .capsule .cap-title{font-size:.72rem;font-weight:500;color:rgba(255,255,255,.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;letter-spacing:1px;order:1}
 .capsule .cap-days{font-size:2.4rem;font-weight:900;line-height:1;letter-spacing:-1px;order:2;text-shadow:0 0 18px currentColor,0 0 40px currentColor}
 .capsule .cap-label{font-size:.58rem;color:rgba(255,255,255,.18);letter-spacing:3px;order:3;text-transform:uppercase}
-.capsule .cap-meta{font-size:.6rem;color:rgba(255,255,255,.15);order:4;display:flex;gap:4px;align-items:center}
-.capsule .del-btn{position:absolute;top:10px;right:14px;width:22px;height:22px;border-radius:11px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.5);color:rgba(255,255,255,.35);font-size:.6rem;cursor:pointer;opacity:0;transition:opacity .3s;z-index:5;display:flex;align-items:center;justify-content:center}
+.capsule .cap-meta{font-size:.6rem;color:rgba(255,255,255,.28);order:4;display:flex;gap:4px;align-items:center}
+.capsule .del-btn{position:absolute;top:10px;right:14px;width:22px;height:22px;border-radius:11px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.4);color:rgba(255,255,255,.4);font-size:.6rem;cursor:pointer;opacity:.35;transition:opacity .3s;z-index:5;display:flex;align-items:center;justify-content:center}
 .capsule:hover .del-btn,.capsule:active .del-btn{opacity:1}
 
 .fab{position:fixed;bottom:28px;right:28px;z-index:100;width:60px;height:60px;border-radius:30px;border:none;background:linear-gradient(135deg,#a78bfa,#f472b6);color:#fff;font-size:1.6rem;cursor:pointer;box-shadow:0 4px 30px rgba(167,139,250,.45);transition:all .3s}
@@ -81,14 +81,13 @@ function E(id){return document.getElementById(id)}
 
 /* ====== PHYSICS V8: soft collisions, spaced spawning ====== */
 var capsules=[], cW=innerWidth, cH=innerHeight, gx=0, gy=0.05, gravActive=false, _raf;
-var P={vMax:2, damp:0.998, gravK:0.03, bounceK:0.5, e:0.25, collDamp:0.85};
+var P={vMax:2.2, dampSlow:0.99, dampFast:0.998, dampThreshold:0.3, gravK:0.03, bounceK:0.5, e:0.25, collDamp:0.82};
 
-function spawnPos(r,skipIdx){
+function spawnPos(r){
   for(var t=0;t<60;t++){
     var x=r+10+Math.random()*(cW-2*r-20), y=r+10+Math.random()*(cH-2*r-100);
     var ok=true;
     for(var i=0;i<capsules.length;i++){
-      if(i===skipIdx)continue;
       var ci=capsules[i], dx=x-ci.x, dy=y-ci.y;
       if(Math.sqrt(dx*dx+dy*dy)<r+ci.r+35){ok=false;break}
     }
@@ -121,8 +120,10 @@ function updatePhysics(){
   for(var i=0;i<capsules.length;i++){
     var ci=capsules[i];
     ci.vx+=gx*P.gravK;ci.vy+=gy*P.gravK;
-    ci.vx*=P.damp;ci.vy*=P.damp;
+    // adaptive damping: slow capsules get stronger damping
     var sp=Math.sqrt(ci.vx*ci.vx+ci.vy*ci.vy);
+    var d=sp<P.dampThreshold?P.dampSlow:P.dampFast;
+    ci.vx*=d;ci.vy*=d;
     if(sp>P.vMax){ci.vx=ci.vx/sp*P.vMax;ci.vy=ci.vy/sp*P.vMax}
     ci.x+=ci.vx;ci.y+=ci.vy;
     var pad=ci.r+8;
@@ -145,6 +146,10 @@ function updatePhysics(){
           b.vx+=jj*a.mass*nx;b.vy+=jj*a.mass*ny;
           a.vx*=P.collDamp;a.vy*=P.collDamp;
           b.vx*=P.collDamp;b.vy*=P.collDamp;
+          // collision spark particles at contact point
+          var cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
+          var ch=COLORS[a.item.color]?.hex||COLORS[b.item.color]?.hex||"#a78bfa";
+          burstAt(cx,cy,ch,8);
         }
       }
     }
@@ -193,7 +198,11 @@ function updateDetailIfOpen(){
 }
 function closeDetail(){
   detailOpenIdx=-1;
-  for(var i=0;i<capsules.length;i++){capsules[i].vx/=0.25;capsules[i].vy/=0.25}
+  for(var i=0;i<capsules.length;i++){
+    capsules[i].vx/=0.25;capsules[i].vy/=0.25;
+    // tiny kick to restart movement
+    capsules[i].vx+=(Math.random()-0.5)*0.6;capsules[i].vy+=(Math.random()-0.5)*0.6;
+  }
   E("detailView").classList.add("hidden");
 }
 function sm(ei){
@@ -215,6 +224,12 @@ function sv(){
 function di(idx){var items=L(),nm=items[idx].title;items.splice(idx,1);S(items);if(detailOpenIdx===idx)closeDetail();rebuildAll();st("已销毁：「"+nm+"」");}
 function st(msg){var t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove()},2200);}
 function burst(ch,n){for(var i=0;i<(n||20);i++){var p=document.createElement("div");p.className="burst-particle";var a=Math.random()*Math.PI*2,d=60+Math.random()*140;p.style.cssText="left:50%;top:50%;width:8px;height:8px;border-radius:50%;background:"+ch+";--bx:"+Math.cos(a)*d+"px;--by:"+Math.sin(a)*d+"px";document.body.appendChild(p);setTimeout(function(){p.remove()},2200)}}
+function burstAt(x,y,ch,n){
+  for(var i=0;i<(n||8);i++){var p=document.createElement("div");p.className="burst-particle";
+    var a=Math.random()*Math.PI*2,d=20+Math.random()*50;
+    p.style.cssText="left:"+(x-4)+"px;top:"+(y-4)+"px;width:6px;height:6px;border-radius:50%;background:"+ch+";--bx:"+Math.cos(a)*d+"px;--by:"+Math.sin(a)*d+"px";
+    document.body.appendChild(p);setTimeout(function(){p.remove()},1800)}
+}
 
 /* ====== GRAVITY ====== */
 function sg(){if(window.DeviceOrientationEvent){if(typeof DeviceOrientationEvent.requestPermission==="function"){DeviceOrientationEvent.requestPermission().then(function(s){if(s==="granted")lo()}).catch(function(){});}else lo();}}
