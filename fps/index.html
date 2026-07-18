@@ -2,35 +2,46 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>🔫 FPS Arena</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="screen-orientation" content="landscape">
+<title>🔫 FPS Arena Mobile</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#111;overflow:hidden;font-family:'Courier New',monospace;user-select:none}
-canvas{display:block;cursor:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Courier New',monospace;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+canvas{display:block;position:absolute;top:0;left:0}
 #ui{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
-#crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px}
-#crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(255,255,255,.85)}
-#crosshair::before{top:8px;left:0;width:20px;height:2px}
-#crosshair::after{top:0;left:8px;width:2px;height:20px}
-#hud{position:absolute;bottom:30px;left:30px;color:#fff;font-size:13px;text-shadow:0 0 8px rgba(0,0,0,.8)}
-.bar{width:180px;height:5px;background:rgba(255,255,255,.2);border-radius:3px;margin:3px 0;overflow:hidden}
-.bar-fill{height:100%;border-radius:3px;transition:width .3s}
-.hp{background:#f44}.ammo-bar{background:#fa0}
-#score{position:absolute;top:25px;right:25px;color:#fff;font-size:22px;text-shadow:0 0 10px rgba(0,0,0,.8)}
-#weapon{position:absolute;bottom:30px;right:25px;color:#fa0;font-size:14px;text-shadow:0 0 8px rgba(0,0,0,.8)}
-#dmg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#f00;font-size:36px;font-weight:bold;opacity:0;text-shadow:0 0 15px rgba(255,0,0,.8)}
-#msg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;text-align:center;text-shadow:0 0 20px rgba(0,0,0,.9)}
-#msg h1{font-size:42px;margin-bottom:8px}
-#msg p{font-size:14px;color:#aaa;margin-bottom:16px}
-#msg button{pointer-events:all;padding:10px 36px;font-size:16px;background:#f44;color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:inherit}
+#crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:16px;height:16px}
+#crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(255,255,255,.9)}
+#crosshair::before{top:6px;left:0;width:16px;height:1.5px}
+#crosshair::after{top:0;left:6px;width:1.5px;height:16px}
+#hud{position:absolute;bottom:20px;left:20px;color:#fff;font-size:12px;text-shadow:0 0 6px rgba(0,0,0,.9)}
+.bar{width:150px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:2px 0;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width .2s}
+.hp{background:linear-gradient(90deg,#f44,#f66)}.ammo-bar{background:linear-gradient(90deg,#fa0,#fc3)}
+#score{position:absolute;top:15px;right:20px;color:#fff;font-size:20px;text-shadow:0 0 8px rgba(0,0,0,.9)}
+#weapon{position:absolute;bottom:20px;right:20px;color:#fa0;font-size:12px;text-shadow:0 0 6px rgba(0,0,0,.9)}
+#dmg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#f00;font-size:30px;font-weight:bold;opacity:0;text-shadow:0 0 12px rgba(255,0,0,.9)}
+#msg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;text-align:center;text-shadow:0 0 20px rgba(0,0,0,.95)}
+#msg h1{font-size:36px;margin-bottom:6px}
+#msg p{font-size:13px;color:#aaa;margin-bottom:14px}
+#msg button{pointer-events:all;padding:10px 32px;font-size:15px;background:#f44;color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:inherit}
 #msg button:hover{background:#f66}
 .hidden{display:none!important}
-#killfeed{position:absolute;top:70px;right:25px;color:#fff;font-size:12px;text-align:right}
-.kill-msg{animation:fadeOut 3s forwards;margin:2px 0}
+#killfeed{position:absolute;top:55px;right:20px;color:#fff;font-size:11px;text-align:right}
+.kill-msg{animation:fadeOut 3s forwards;margin:1px 0}
 @keyframes fadeOut{0%{opacity:1}70%{opacity:1}100%{opacity:0}}
-#minimap{position:absolute;bottom:30px;left:240px;width:100px;height:100px;border:2px solid rgba(255,255,255,.3);border-radius:50%;overflow:hidden;background:rgba(0,0,0,.5)}
+#minimap{position:absolute;bottom:20px;left:190px;width:80px;height:80px;border:2px solid rgba(255,255,255,.3);border-radius:50%;overflow:hidden;background:rgba(0,0,0,.6)}
 #minimap canvas{width:100%;height:100%}
+#touch-controls{position:fixed;bottom:0;left:0;width:100%;height:100%;pointer-events:none;z-index:20}
+.touch-btn{position:absolute;pointer-events:all;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);font-size:18px}
+.touch-btn:active{background:rgba(255,255,255,.2)}
+#btn-fire{width:70px;height:70px;bottom:30px;right:30px;font-size:28px}
+#btn-reload{width:50px;height:50px;bottom:110px;right:40px;font-size:16px}
+#btn-weapon{width:50px;height:50px;bottom:30px;right:120px;font-size:16px}
+#btn-joystick{width:100px;height:100px;bottom:20px;left:20px}
+#joystick-knob{width:40px;height:40px;background:rgba(255,255,255,.25);border-radius:50%;position:relative;transition:transform .05s}
 </style>
 </head>
 <body>
@@ -40,19 +51,25 @@ canvas{display:block;cursor:none}
 <div id="hud">
 <div>❤️ <span id="hpText">100</span></div>
 <div class="bar"><div class="bar-fill hp" id="hpBar" style="width:100%"></div></div>
-<div style="margin-top:6px">🔫 <span id="ammoText">30</span>/<span id="ammoMax">30</span></div>
+<div style="margin-top:4px">🔫 <span id="ammoText">12</span>/<span id="ammoMax">12</span></div>
 <div class="bar"><div class="bar-fill ammo-bar" id="ammoBar" style="width:100%"></div></div>
 </div>
 <div id="score">🏆 <span id="scoreText">0</span></div>
-<div id="weapon">🔫 <span id="weaponText">手枪</span> [1-4]</div>
+<div id="weapon">🔫 <span id="weaponText">手枪</span></div>
 <div id="dmg"></div>
 <div id="killfeed"></div>
-<div id="minimap"><canvas id="minimapCanvas" width="100" height="100"></canvas></div>
+<div id="minimap"><canvas id="minimapCanvas" width="80" height="80"></canvas></div>
 <div id="msg">
 <h1>🔫 FPS Arena</h1>
-<p>WASD移动 | 鼠标瞄准 | 左键射击 | R换弹 | 1-4武器 | Shift冲刺</p>
+<p>左侧摇杆移动 | 右侧射击 | 滑动瞄准</p>
 <button onclick="startGame()">开始战斗</button>
 </div>
+</div>
+<div id="touch-controls">
+<div class="touch-btn" id="btn-joystick"><div id="joystick-knob"></div></div>
+<div class="touch-btn" id="btn-fire">🔫</div>
+<div class="touch-btn" id="btn-reload">🔄</div>
+<div class="touch-btn" id="btn-weapon">🔀</div>
 </div>
 <script src="game.js"></script>
 </body>
