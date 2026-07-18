@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<title>📊 GPU 压力测试</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Courier New',monospace;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+canvas{display:block}
+#hud{position:fixed;top:0;left:0;width:100%;pointer-events:none;z-index:10;padding:12px}
+#hud .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+#hud .label{color:#888;font-size:11px;text-transform:uppercase;letter-spacing:1px}
+#hud .value{color:#fff;font-size:20px;font-weight:bold}
+#hud .warn{color:#f80}#hud .danger{color:#f44}#hud .good{color:#0f0}
+#fps-bar{width:100%;height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:4px;overflow:hidden}
+#fps-bar-fill{height:100%;border-radius:2px;transition:width .3s,background .3s}
+#controls{position:fixed;bottom:0;left:0;width:100%;pointer-events:none;z-index:10;padding:16px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+#controls button{pointer-events:all;padding:12px 20px;font-size:14px;font-family:inherit;border:none;border-radius:8px;cursor:pointer;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);transition:all .15s;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#controls button:active{background:rgba(255,255,255,.25);transform:scale(.95)}
+#controls button.primary{background:rgba(255,100,50,.3);border-color:rgba(255,100,50,.5)}
+#controls button.danger{background:rgba(255,50,50,.3);border-color:rgba(255,50,50,.5)}
+#tap-hint{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:rgba(255,255,255,.4);font-size:16px;pointer-events:none;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:.7}}
+#crash-warn{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,0,0,.9);color:#fff;padding:20px 30px;border-radius:12px;font-size:18px;text-align:center;display:none;z-index:100;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="hud">
+  <div class="row"><span class="label">FPS</span><span class="value" id="fps-val">--</span></div>
+  <div id="fps-bar"><div id="fps-bar-fill" style="width:100%"></div></div>
+  <div class="row" style="margin-top:6px"><span class="label">模型数</span><span class="value" id="model-count">0</span></div>
+  <div class="row"><span class="label">顶点数</span><span class="value" id="vert-count">0</span></div>
+  <div class="row"><span class="label">粒子数</span><span class="value" id="particle-count">0</span></div>
+  <div class="row"><span class="label">内存</span><span class="value" id="mem-val">--</span></div>
+  <div class="row"><span class="label">状态</span><span class="value" id="status-val" style="color:#0f0">就绪</span></div>
+</div>
+<div id="tap-hint">👆 点击屏幕添加模型</div>
+<div id="controls">
+  <button class="primary" onclick="addModels(1)">+1 模型</button>
+  <button class="primary" onclick="addModels(5)">+5 模型</button>
+  <button class="primary" onclick="addModels(20)">+20 模型</button>
+  <button onclick="addModels(50)">+50 模型</button>
+  <button onclick="addParticles(500)">+500 粒子</button>
+  <button class="danger" onclick="resetAll()">🔄 重置</button>
+</div>
+<div id="crash-warn">⚠️ 性能严重下降<br><small>建议减少模型数量</small></div>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+// ==================== 场景初始化 ====================
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x000011, 0.00015);
+scene.background = new THREE.Color(0x000011);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.5, 200);
+camera.position.set(0, 8, 25);
+camera.lookAt(0, 0, 0);
+
+// 灯光
+const ambientLight = new THREE.AmbientLight(0x223344, 0.5);
+scene.add(ambientLight);
+
+const sunLight = new THREE.DirectionalLight(0xffeedd, 3);
+sunLight.position.set(20, 30, 10);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.width = 1024;
+sunLight.shadow.mapSize.height = 1024;
+sunLight.shadow.camera.near = 1;
+sunLight.shadow.camera.far = 100;
+sunLight.shadow.camera.left = -30;
+sunLight.shadow.camera.right = 30;
+sunLight.shadow.camera.top = 30;
+sunLight.shadow.camera.bottom = -30;
+scene.add(sunLight);
+
+// 彩色点光源
+const pointLights = [];
+const lightColors = [0xff4444, 0x44ff44, 0x4444ff, 0xff44ff, 0xffff44, 0x44ffff];
+for (let i = 0; i < 6; i++) {
+  const pl = new THREE.PointLight(lightColors[i], 50, 20);
+  pl.position.set(Math.cos(i * Math.PI / 3) * 12, 3 + Math.random() * 6, Math.sin(i * Math.PI / 3) * 12);
+  scene.add(pl);
+  pointLights.push(pl);
+}
+
+// 地面
+const groundGeo = new THREE.PlaneGeometry(60, 60);
+const groundMat = new THREE.MeshStandardMaterial({ color: 0x111122, roughness: 0.8, metalness: 0.3 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -5;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// 网格线
+const gridHelper = new THREE.PolarGridHelper(25, 32, 24, 128, 0x334466, 0x334466);
+gridHelper.position.y = -4.99;
+scene.add(gridHelper);
+
+// ==================== 模型系统 ====================
+const models = [];
+const modelGroup = new THREE.Group();
+scene.add(modelGroup);
+
+// 多种几何体
+function createRandomGeometry() {
+  const types = ['torus', 'torusKnot', 'icosahedron', 'dodecahedron', 'octahedron', 'cone', 'cylinder', 'sphere'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  const detail = Math.floor(Math.random() * 3) + 2; // 2-4 级细分
+
+  switch (type) {
+    case 'torus': return new THREE.TorusGeometry(1, 0.4, 32 * detail, 16 * detail);
+    case 'torusKnot': return new THREE.TorusKnotGeometry(0.8, 0.3, 128 * detail, 16 * detail);
+    case 'icosahedron': return new THREE.IcosahedronGeometry(1, detail);
+    case 'dodecahedron': return new THREE.DodecahedronGeometry(1, detail);
+    case 'octahedron': return new THREE.OctahedronGeometry(1, detail);
+    case 'cone': return new THREE.ConeGeometry(1, 2, 48 * detail, 24 * detail);
+    case 'cylinder': return new THREE.CylinderGeometry(0.7, 0.9, 2.5, 48 * detail, 16 * detail);
+    case 'sphere': return new THREE.SphereGeometry(1, 64 * detail, 32 * detail);
+    default: return new THREE.SphereGeometry(1, 32, 16);
+  }
+}
+
+function createRandomMaterial() {
+  const types = ['metallic', 'glossy', 'emissive', 'glass', 'wireframe'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  const color = new THREE.Color().setHSL(Math.random(), 0.8, 0.5 + Math.random() * 0.3);
+
+  switch (type) {
+    case 'metallic':
+      return new THREE.MeshStandardMaterial({ color, roughness: 0.2, metalness: 0.9 });
+    case 'glossy':
+      return new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.1 });
+    case 'emissive':
+      return new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.5, emissive: color, emissiveIntensity: 0.6 });
+    case 'glass':
+      return new THREE.MeshPhysicalMaterial({ color, roughness: 0.1, metalness: 0, transparent: true, opacity: 0.7, clearcoat: 0.5 });
+    case 'wireframe':
+      return new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.3, wireframe: true });
+    default:
+      return new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.3 });
+  }
+}
+
+function addModels(count) {
+  for (let i = 0; i < count; i++) {
+    const geo = createRandomGeometry();
+    const mat = createRandomMaterial();
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    // 随机位置（环形分布）
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 3 + Math.random() * 15;
+    mesh.position.set(
+      Math.cos(angle) * radius,
+      -2 + Math.random() * 8,
+      Math.sin(angle) * radius
+    );
+    mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+
+    // 动画参数
+    mesh.userData = {
+      rotSpeed: { x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2, z: (Math.random() - 0.5) * 2 },
+      floatSpeed: 0.5 + Math.random() * 2,
+      floatAmp: 0.5 + Math.random() * 2,
+      floatPhase: Math.random() * Math.PI * 2,
+      baseY: mesh.position.y,
+      pulsePhase: Math.random() * Math.PI * 2,
+      pulseSpeed: 1 + Math.random() * 3,
+      orbitRadius: radius,
+      orbitSpeed: (Math.random() - 0.5) * 0.5,
+      orbitAngle: angle,
+      orbitY: mesh.position.y
+    };
+
+    modelGroup.add(mesh);
+    models.push(mesh);
+  }
+  updateHUD();
+}
+
+// ==================== 粒子系统 ====================
+const particlesGroup = new THREE.Group();
+scene.add(particlesGroup);
+let particleSystems = [];
+
+function addParticles(count) {
+  const geo = new THREE.BufferGeometry();
+  const positions = new Float32Array(count * 3);
+  const colors = new Float32Array(count * 3);
+  const sizes = new Float32Array(count);
+
+  for (let i = 0; i < count; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 30;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 30;
+    const c = new THREE.Color().setHSL(Math.random(), 0.9, 0.6);
+    colors[i * 3] = c.r;
+    colors[i * 3 + 1] = c.g;
+    colors[i * 3 + 2] = c.b;
+    sizes[i] = Math.random() * 0.3 + 0.05;
+  }
+
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+  const mat = new THREE.PointsMaterial({
+    size: 0.15,
+    vertexColors: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    transparent: true,
+    opacity: 0.8
+  });
+
+  const points = new THREE.Points(geo, mat);
+  points.userData = {
+    velocities: Array.from({ length: count }, () => ({
+      x: (Math.random() - 0.5) * 0.05,
+      y: (Math.random() - 0.5) * 0.05,
+      z: (Math.random() - 0.5) * 0.05
+    }))
+  };
+  particlesGroup.add(points);
+  particleSystems.push(points);
+  updateHUD();
+}
+
+// ==================== 后期特效环 ====================
+const ringGroup = new THREE.Group();
+scene.add(ringGroup);
+
+// 发光环
+for (let i = 0; i < 3; i++) {
+  const ringGeo = new THREE.TorusGeometry(8 + i * 3, 0.05, 16, 128);
+  const ringMat = new THREE.MeshBasicMaterial({ color: new THREE.Color().setHSL(i * 0.33, 1, 0.5), transparent: true, opacity: 0.4 });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = Math.PI / 2 + i * 0.3;
+  ring.userData = { rotSpeed: 0.3 + i * 0.2, tilt: i * 0.3 };
+  ringGroup.add(ring);
+}
+
+// ==================== HUD ====================
+let fpsHistory = [];
+let totalVertices = 0;
+
+function updateHUD() {
+  document.getElementById('model-count').textContent = models.length;
+  document.getElementById('particle-count').textContent = particleSystems.reduce((s, p) => s + p.geometry.attributes.position.count, 0);
+
+  totalVertices = models.reduce((s, m) => s + (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count), 0);
+  document.getElementById('vert-count').textContent = (totalVertices / 1000).toFixed(1) + 'K';
+
+  // 内存估算
+  if (performance.memory) {
+    const mb = (performance.memory.usedJSHeapSize / 1048576).toFixed(1);
+    document.getElementById('mem-val').textContent = mb + ' MB';
+  }
+}
+
+function updateFPS(fps) {
+  fpsHistory.push(fps);
+  if (fpsHistory.length > 30) fpsHistory.shift();
+  const avgFPS = fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length;
+
+  document.getElementById('fps-val').textContent = Math.round(fps);
+  const bar = document.getElementById('fps-bar-fill');
+  const pct = Math.min(fps / 60 * 100, 100);
+  bar.style.width = pct + '%';
+
+  const status = document.getElementById('status-val');
+  if (fps >= 50) { bar.style.background = '#0f0'; status.style.color = '#0f0'; status.textContent = '流畅'; }
+  else if (fps >= 30) { bar.style.background = '#ff0'; status.style.color = '#ff0'; status.textContent = '可玩'; }
+  else if (fps >= 15) { bar.style.background = '#f80'; status.style.color = '#f80'; status.textContent = '卡顿'; }
+  else { bar.style.background = '#f00'; status.style.color = '#f00'; status.textContent = '严重卡顿'; }
+
+  const crashWarn = document.getElementById('crash-warn');
+  if (fps < 10 && models.length > 10) crashWarn.style.display = 'block';
+  else crashWarn.style.display = 'none';
+
+  // 根据 FPS 动态调整色调映射
+  if (fps < 20) renderer.toneMappingExposure = 0.8;
+  else renderer.toneMappingExposure = 1.2;
+}
+
+// ==================== 主循环 ====================
+const clock = new THREE.Clock();
+let frameCount = 0, fpsTime = 0, currentFPS = 60;
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  const dt = Math.min(clock.getDelta(), 0.1);
+  const time = performance.now() * 0.001;
+
+  // FPS 计算
+  frameCount++;
+  fpsTime += dt;
+  if (fpsTime >= 0.5) {
+    currentFPS = Math.round(frameCount / fpsTime);
+    frameCount = 0; fpsTime = 0;
+    updateFPS(currentFPS);
+    updateHUD();
+  }
+
+  // 模型动画
+  for (const mesh of models) {
+    const ud = mesh.userData;
+    // 自转
+    mesh.rotation.x += ud.rotSpeed.x * dt;
+    mesh.rotation.y += ud.rotSpeed.y * dt;
+    mesh.rotation.z += ud.rotSpeed.z * dt;
+    // 浮动
+    mesh.position.y = ud.baseY + Math.sin(time * ud.floatSpeed + ud.floatPhase) * ud.floatAmp;
+    // 脉冲缩放
+    const pulse = 1 + Math.sin(time * ud.pulseSpeed + ud.pulsePhase) * 0.15;
+    mesh.scale.setScalar(pulse);
+    // 轨道运动
+    ud.orbitAngle += ud.orbitSpeed * dt;
+    mesh.position.x = Math.cos(ud.orbitAngle) * ud.orbitRadius;
+    mesh.position.z = Math.sin(ud.orbitAngle) * ud.orbitRadius;
+  }
+
+  // 粒子动画
+  for (const ps of particleSystems) {
+    const pos = ps.geometry.attributes.position.array;
+    const vels = ps.userData.velocities;
+    for (let i = 0; i < pos.length / 3; i++) {
+      pos[i * 3] += vels[i].x;
+      pos[i * 3 + 1] += vels[i].y;
+      pos[i * 3 + 2] += vels[i].z;
+      // 边界反弹
+      if (Math.abs(pos[i * 3]) > 15) vels[i].x *= -1;
+      if (Math.abs(pos[i * 3 + 1]) > 10) vels[i].y *= -1;
+      if (Math.abs(pos[i * 3 + 2]) > 15) vels[i].z *= -1;
+    }
+    ps.geometry.attributes.position.needsUpdate = true;
+  }
+
+  // 灯光动画
+  for (let i = 0; i < pointLights.length; i++) {
+    const pl = pointLights[i];
+    pl.position.x = Math.cos(time * 0.7 + i * Math.PI / 3) * 12;
+    pl.position.z = Math.sin(time * 0.7 + i * Math.PI / 3) * 12;
+    pl.intensity = 30 + Math.sin(time * 2 + i) * 20;
+  }
+
+  // 环动画
+  for (const ring of ringGroup.children) {
+    ring.rotation.z += ring.userData.rotSpeed * dt;
+  }
+
+  // 相机微动
+  camera.position.x = Math.sin(time * 0.2) * 3;
+  camera.position.y = 8 + Math.sin(time * 0.3) * 1.5;
+  camera.lookAt(0, 0, 0);
+
+  renderer.render(scene, camera);
+}
+
+// ==================== 事件 ====================
+renderer.domElement.addEventListener('click', (e) => {
+  // 排除按钮区域
+  if (e.clientY > window.innerHeight - 80) return;
+  addModels(1);
+  document.getElementById('tap-hint').style.display = 'none';
+});
+
+renderer.domElement.addEventListener('touchstart', (e) => {
+  if (e.touches[0].clientY > window.innerHeight - 80) return;
+  addModels(1);
+  document.getElementById('tap-hint').style.display = 'none';
+}, { passive: true });
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// 全局函数
+window.addModels = addModels;
+window.addParticles = addParticles;
+window.resetAll = () => {
+  while (modelGroup.children.length > 0) modelGroup.remove(modelGroup.children[0]);
+  models.length = 0;
+  while (particlesGroup.children.length > 0) particlesGroup.remove(particlesGroup.children[0]);
+  particleSystems.length = 0;
+  fpsHistory = [];
+  updateHUD();
+  document.getElementById('tap-hint').style.display = 'block';
+  document.getElementById('crash-warn').style.display = 'none';
+  document.getElementById('status-val').textContent = '就绪';
+  document.getElementById('status-val').style.color = '#0f0';
+};
+
+// 启动
+addModels(3);
+addParticles(200);
+animate();
+updateHUD();
+</script>
+</body>
+</html>
