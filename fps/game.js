@@ -37,8 +37,17 @@ for (let x = 16; x <= 40; x++) map[12][x] = 0;
 for (let y = 16; y <= 40; y++) map[y][28] = 0;
 for (let i = 0; i < 35; i++) { let x = 5 + Math.floor(Math.random() * (MS - 10)), y = 5 + Math.floor(Math.random() * (MS - 10)); if (map[y][x] === 0 && !(x > 10 && x < 20 && y > 10 && y < 20)) map[y][x] = 1; }
 
+// 静态小地图图层：地图墙体只绘制一次，动态实体单独叠加
+const minimapLayer = document.createElement('canvas');
+minimapLayer.width = minimapLayer.height = 80;
+const minimapLayerCtx = minimapLayer.getContext('2d');
+minimapLayerCtx.fillStyle = 'rgba(0,0,0,.7)'; minimapLayerCtx.fillRect(0, 0, 80, 80);
+const minimapScale = 80 / MS;
+minimapLayerCtx.fillStyle = '#444';
+for (let y = 0; y < MS; y++) for (let x = 0; x < MS; x++) if (map[y][x] === 1) minimapLayerCtx.fillRect(x * minimapScale, y * minimapScale, minimapScale, minimapScale);
+
 // 玩家
-let player = { x: 12, y: 12, angle: 0, hp: 100, maxHp: 100, speed: 3.5, sprintMul: 1.7, score: 0, alive: true, bobPhase: 0, recoilOffset: 0, weaponKick: 0 };
+let player = { x: 12, y: 12, angle: 0, hp: 100, maxHp: 100, armor: 50, maxArmor: 50, speed: 3.5, sprintMul: 1.7, score: 0, wave: 1, waveKills: 0, streak: 0, alive: true, bobPhase: 0, recoilOffset: 0, weaponKick: 0, shake: 0 };
 let keys = {}, mouseDown = false, gameRunning = false;
 
 // 武器
@@ -51,11 +60,23 @@ const weapons = [
 let currentWeapon = 0, lastShot = 0, reloading = false, reloadStart = 0;
 
 // 实体
-let enemies = [], bullets = [], particles = [], muzzleFlash = 0, shellCasings = [];
-const MAX_ENEMIES = 10;
+let enemies = [], bullets = [], particles = [], visibleParticles = [], muzzleFlash = 0, shellCasings = [];
+const MAX_ENEMIES = 10, MAX_PARTICLES = 180, VIEW_FOV = Math.PI / 3;
+
+function segmentHitsCircle(x1, y1, x2, y2, cx, cy, radius) {
+  const vx = x2 - x1, vy = y2 - y1, len2 = vx * vx + vy * vy;
+  const t = len2 ? Math.max(0, Math.min(1, ((cx - x1) * vx + (cy - y1) * vy) / len2)) : 0;
+  const dx = x1 + vx * t - cx, dy = y1 + vy * t - cy;
+  return dx * dx + dy * dy <= radius * radius;
+}
+
+function addParticles(items) {
+  particles.push(...items);
+  if (particles.length > MAX_PARTICLES) particles.splice(0, particles.length - MAX_PARTICLES);
+}
 
 function spawnEnemy() {
-  if (enemies.length >= MAX_ENEMIES) return;
+  if (enemies.length >= Math.min(MAX_ENEMIES, 5 + player.wave)) return;
   let ex, ey, ok = false, tries = 0;
   while (!ok && tries < 50) { tries++; ex = 4 + Math.random() * (MS - 8); ey = 4 + Math.random() * (MS - 8); let dx = ex - player.x, dy = ey - player.y; if (Math.sqrt(dx * dx + dy * dy) > 6 && map[Math.floor(ey)][Math.floor(ex)] === 0) ok = true; }
   if (!ok) return;
@@ -178,7 +199,7 @@ function shoot() {
     let spread = (Math.random() - 0.5) * w.spread;
     let a = player.angle + spread;
     let dist = raycast(player.x, player.y, a);
-    bullets.push({ x: player.x, y: player.y, angle: a, dist: dist, damage: w.damage, color: w.color, life: 0 });
+    bullets.push({ x: player.x, y: player.y, prevX: player.x, prevY: player.y, angle: a, dist: dist, traveled: 0, damage: w.damage, color: w.color, life: 0 });
   }
   // 弹壳
   shellCasings.push({ x: 0, y: 0, vx: (Math.random() - 0.5) * 3 + 2, vy: -3 - Math.random() * 4, life: 600, rot: Math.random() * Math.PI * 2, rotV: (Math.random() - 0.5) * 10 });
@@ -189,10 +210,14 @@ function updateHUD() {
   let w = weapons[currentWeapon];
   document.getElementById('hpText').textContent = Math.max(0, Math.floor(player.hp));
   document.getElementById('hpBar').style.width = (player.hp / player.maxHp * 100) + '%';
+  document.getElementById('armorText').textContent = Math.max(0, Math.floor(player.armor));
+  document.getElementById('armorBar').style.width = (player.armor / player.maxArmor * 100) + '%';
   document.getElementById('ammoText').textContent = w.ammo;
   document.getElementById('ammoMax').textContent = w.maxAmmo;
   document.getElementById('ammoBar').style.width = (w.ammo / w.maxAmmo * 100) + '%';
   document.getElementById('scoreText').textContent = player.score;
+  document.getElementById('waveText').textContent = player.wave;
+  document.getElementById('streakText').textContent = player.streak;
 }
 
 function addKillMsg(msg) {
@@ -241,6 +266,7 @@ function update(dt) {
   // 后坐力衰减
   player.recoilOffset *= 0.85;
   player.weaponKick *= 0.8;
+  player.shake *= 0.88;
 
   // 射击
   if (mouseDown) { let w = weapons[currentWeapon]; if (w.auto) shoot(); else if (Date.now() - lastShot >= w.fireRate) shoot(); }
@@ -248,24 +274,45 @@ function update(dt) {
   // 换弹
   if (reloading) { let w = weapons[currentWeapon]; if (Date.now() - reloadStart >= w.reloadTime) { w.ammo = w.maxAmmo; reloading = false; updateHUD(); } }
 
-  // 子弹
-  for (let b of bullets) { b.life += dt; b.x = b.x + Math.cos(b.angle) * 120 * dt / 1000; b.y = b.y + Math.sin(b.angle) * 120 * dt / 1000; }
-  bullets = bullets.filter(b => b.life < 350);
+  // 子弹：移动距离限制在墙面前，先结算线段命中，再清理到期子弹
+  for (let b of bullets) {
+    b.life += dt; b.prevX = b.x; b.prevY = b.y;
+    const remaining = Math.max(0, b.dist - b.traveled);
+    const step = Math.min(120 * dt / 1000, remaining);
+    b.x += Math.cos(b.angle) * step; b.y += Math.sin(b.angle) * step; b.traveled += step;
+  }
 
-  // 命中
+  // 命中：每颗霰弹独立结算
   for (let i = bullets.length - 1; i >= 0; i--) {
-    let b = bullets[i];
-    for (let e of enemies) {
-      let dx = b.x - e.x, dy = b.y - e.y;
-      if (Math.sqrt(dx * dx + dy * dy) < 0.4) {
-        e.hp -= b.damage; sfxHit();
-        for (let p = 0; p < 6; p++) particles.push({ x: e.x, y: e.y, vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4, life: 250, color: '#f33', size: Math.random() * 3 + 1 });
-        bullets.splice(i, 1);
-        if (e.hp <= 0) { player.score += e.score; sfxKill(); addKillMsg('击杀 ' + (e.type === 'heavy' ? '重型兵' : e.type === 'fast' ? '疾速兵' : '士兵') + ' +' + e.score); for (let p = 0; p < 15; p++) particles.push({ x: e.x, y: e.y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6, life: 400, color: '#f60', size: Math.random() * 4 + 2 }); enemies.splice(enemies.indexOf(e), 1); }
-        break;
+    const b = bullets[i];
+    let hitIndex = -1;
+    for (let j = 0; j < enemies.length; j++) {
+      const e = enemies[j];
+      if (segmentHitsCircle(b.prevX, b.prevY, b.x, b.y, e.x, e.y, 0.4 * e.size)) { hitIndex = j; break; }
+    }
+    if (hitIndex < 0) continue;
+    const e = enemies[hitIndex];
+    e.hp -= b.damage; sfxHit(); bullets.splice(i, 1);
+    const hitParticles = [];
+    for (let p = 0; p < 6; p++) hitParticles.push({ x: e.x, y: e.y, vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4, life: 250, color: '#f33', size: Math.random() * 3 + 1 });
+    addParticles(hitParticles);
+    if (e.hp <= 0) {
+      player.score += e.score; player.streak++; player.waveKills++; sfxKill();
+      const label = e.type === 'heavy' ? '重型兵' : e.type === 'fast' ? '疾速兵' : '士兵';
+      addKillMsg('x' + player.streak + ' 击杀 ' + label + ' +' + e.score);
+      const deathParticles = [];
+      for (let p = 0; p < 15; p++) deathParticles.push({ x: e.x, y: e.y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6, life: 400, color: '#f60', size: Math.random() * 4 + 2 });
+      addParticles(deathParticles); enemies.splice(hitIndex, 1);
+      const waveTarget = 6 + player.wave * 2;
+      if (player.waveKills >= waveTarget) {
+        player.wave++; player.waveKills = 0;
+        player.armor = Math.min(player.maxArmor, player.armor + 15);
+        addKillMsg('⚡ 第 ' + player.wave + ' 波 · 护甲补给 +15');
       }
+      updateHUD();
     }
   }
+  bullets = bullets.filter(b => b.life < 350 && b.traveled < b.dist);
 
   // 弹壳
   for (let s of shellCasings) { s.x += s.vx * dt / 1000; s.y += s.vy * dt / 1000; s.vy += 15 * dt / 1000; s.life -= dt; s.rot += s.rotV * dt / 1000; }
@@ -275,11 +322,19 @@ function update(dt) {
   for (let e of enemies) {
     let dx = player.x - e.x, dy = player.y - e.y, dist = Math.sqrt(dx * dx + dy * dy);
     if (dist > 0.3) { let nx = e.x + dx / dist * e.speed * dt / 1000, ny = e.y + dy / dist * e.speed * dt / 1000; if (!isWall(nx, e.y)) e.x = nx; if (!isWall(e.x, ny)) e.y = ny; }
-    if (dist < 1.8 && Date.now() - e.lastAttack > e.attackRate) { player.hp -= e.damage; e.lastAttack = Date.now(); showDamage(e.damage); sfxHit(); updateHUD(); if (player.hp <= 0) gameOver(); }
+    if (dist < 1.8 && Date.now() - e.lastAttack > e.attackRate) { let absorbed = Math.min(player.armor, Math.ceil(e.damage * 0.6)); player.armor -= absorbed; player.hp -= e.damage - absorbed; player.streak = 0; player.shake = 8; e.lastAttack = Date.now(); showDamage(e.damage); sfxHit(); updateHUD(); if (player.hp <= 0) gameOver(); }
   }
 
-  // 粒子
-  for (let p of particles) { p.x += p.vx * dt / 1000; p.y += p.vy * dt / 1000; p.life -= dt; }
+  // 粒子：更新阶段预计算可见性与投影所需数据，渲染阶段直接消费
+  visibleParticles = [];
+  for (let p of particles) {
+    p.x += p.vx * dt / 1000; p.y += p.vy * dt / 1000; p.life -= dt;
+    if (p.life <= 0) continue;
+    const dx = p.x - player.x, dy = p.y - player.y, dist = Math.hypot(dx, dy);
+    let diff = Math.atan2(dy, dx) - player.angle;
+    if (diff > Math.PI) diff -= Math.PI * 2; else if (diff < -Math.PI) diff += Math.PI * 2;
+    if (Math.abs(diff) < VIEW_FOV / 2 && dist > 0.05) visibleParticles.push({ p, dist, diff });
+  }
   particles = particles.filter(p => p.life > 0);
   if (muzzleFlash > 0) muzzleFlash -= dt;
   if (enemies.length < MAX_ENEMIES && Math.random() < 0.025) spawnEnemy();
@@ -419,7 +474,7 @@ function render() {
   ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, W, HH);
   ctx.fillStyle = '#111'; ctx.fillRect(0, HH, W, HH);
 
-  const FOV = Math.PI / 3, NUM_RAYS = Math.floor(W / 3);
+  const FOV = VIEW_FOV, NUM_RAYS = Math.floor(W / 3);
 
   // 墙壁
   for (let i = 0; i < NUM_RAYS; i++) {
@@ -477,26 +532,24 @@ function render() {
     ctx.fillStyle = `rgba(255,255,200,${a * 0.5})`; ctx.beginPath(); ctx.arc(HW, HH + 38, 6 + Math.random() * 5, 0, Math.PI * 2); ctx.fill();
   }
 
+  // 受击屏幕震动与红晕
+  if (player.shake > 0.5) { ctx.save(); ctx.translate((Math.random() - 0.5) * player.shake, (Math.random() - 0.5) * player.shake); }
   // 武器
   drawWeapon();
+  if (player.shake > 0.5) ctx.restore();
+  if (player.hp < player.maxHp * 0.35) { ctx.fillStyle = 'rgba(220,0,0,0.16)'; ctx.fillRect(0, 0, W, H); }
 
-  // 粒子
-  for (let p of particles) {
-    let dx = p.x - player.x, dy = p.y - player.y, dist = Math.sqrt(dx * dx + dy * dy);
-    let angleTo = Math.atan2(dy, dx), diff = angleTo - player.angle;
-    while (diff > Math.PI) diff -= Math.PI * 2; while (diff < -Math.PI) diff += Math.PI * 2;
-    if (Math.abs(diff) < FOV / 2 && dist > 0.05) {
-      let sx = HW + diff / FOV * W, sy = HH - (p.y - player.y) / (dist + 0.1) * H;
-      ctx.fillStyle = p.color; ctx.globalAlpha = p.life / 400;
-      ctx.fillRect(sx - p.size / 2, sy - p.size / 2, p.size, p.size);
-      ctx.globalAlpha = 1;
-    }
+  // 粒子（投影参数已在 update 中预计算）
+  for (const { p, dist, diff } of visibleParticles) {
+    const sx = HW + diff / FOV * W, sy = HH - (p.y - player.y) / (dist + 0.1) * H;
+    ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, Math.min(1, p.life / 400));
+    ctx.fillRect(sx - p.size / 2, sy - p.size / 2, p.size, p.size);
   }
+  ctx.globalAlpha = 1;
 
-  // 小地图
-  mCtx.fillStyle = 'rgba(0,0,0,.7)'; mCtx.fillRect(0, 0, 80, 80);
-  let scale = 80 / MS;
-  for (let y = 0; y < MS; y++) for (let x = 0; x < MS; x++) if (map[y][x] === 1) { mCtx.fillStyle = '#444'; mCtx.fillRect(x * scale, y * scale, scale, scale); }
+  // 小地图：复用预渲染墙体，仅重绘玩家和敌人
+  mCtx.clearRect(0, 0, 80, 80); mCtx.drawImage(minimapLayer, 0, 0);
+  const scale = minimapScale;
   mCtx.fillStyle = '#0f0'; mCtx.beginPath(); mCtx.arc(player.x * scale, player.y * scale, 2.5, 0, Math.PI * 2); mCtx.fill();
   mCtx.strokeStyle = '#0f0'; mCtx.lineWidth = 1; mCtx.beginPath();
   mCtx.moveTo(player.x * scale, player.y * scale); mCtx.lineTo((player.x + Math.cos(player.angle) * 2.5) * scale, (player.y + Math.sin(player.angle) * 2.5) * scale); mCtx.stroke();
@@ -528,9 +581,10 @@ function gameLoop(ts) {
 
 function startGame() {
   initAudio();
-  player = { x: 12, y: 12, angle: 0, hp: 100, maxHp: 100, speed: 3.5, sprintMul: 1.7, score: 0, alive: true, bobPhase: 0, recoilOffset: 0, weaponKick: 0 };
-  enemies = []; bullets = []; particles = []; shellCasings = [];
-  currentWeapon = 0; reloading = false; muzzleFlash = 0;
+  player = { x: 12, y: 12, angle: 0, hp: 100, maxHp: 100, armor: 50, maxArmor: 50, speed: 3.5, sprintMul: 1.7, score: 0, wave: 1, waveKills: 0, streak: 0, alive: true, bobPhase: 0, recoilOffset: 0, weaponKick: 0, shake: 0 };
+  enemies = []; bullets = []; particles = []; visibleParticles = []; shellCasings = [];
+  currentWeapon = 0; reloading = false; muzzleFlash = 0; mouseDown = false; lastShot = 0;
+  for (const w of weapons) w.ammo = w.maxAmmo;
   for (let i = 0; i < 4; i++) spawnEnemy();
   document.getElementById('msg').classList.add('hidden');
   document.getElementById('weaponText').textContent = '手枪';
