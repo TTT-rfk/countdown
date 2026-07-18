@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>大鱼吃小鱼</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a2e;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif}
+#game-container{position:relative;border:3px solid rgba(100,180,255,.3);border-radius:16px;overflow:hidden;box-shadow:0 0 60px rgba(30,100,255,.2),0 0 120px rgba(0,200,255,.08)}
+canvas{display:block;background:linear-gradient(180deg,#0a1040 0%,#0d2060 40%,#103070 70%,#0a2050 100%)}
+#ui{position:absolute;top:0;left:0;width:100%;pointer-events:none;padding:12px 16px;display:flex;justify-content:space-between;align-items:flex-start}
+.ui-card{background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px 14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.ui-label{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:2px;text-transform:uppercase}
+.ui-value{font-size:24px;font-weight:800;color:#fff;line-height:1.2}
+#score-val{color:#00ff88}
+#timer-val{color:#ffcc00}
+#timer-val.urgent{color:#ff3366;animation:pulse .5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;pointer-events:none;transition:opacity .4s}
+#overlay.hidden{opacity:0}
+#overlay .title{font-size:42px;font-weight:900;color:#fff;text-shadow:0 0 30px rgba(0,200,255,.6);margin-bottom:8px;letter-spacing:2px}
+#overlay .subtitle{font-size:15px;color:rgba(255,255,255,.5);margin-bottom:24px;letter-spacing:1px}
+#overlay button{pointer-events:all;padding:12px 36px;font-size:16px;font-weight:700;letter-spacing:1px;border:none;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#00cc66,#00aa88);color:#fff;box-shadow:0 4px 20px rgba(0,200,100,.3);transition:all .2s}
+#overlay button:active{transform:scale(.94)}
+#overlay .win-title{color:#ffcc00;text-shadow:0 0 40px rgba(255,200,0,.7)}
+#overlay .lose-title{color:#ff3366;text-shadow:0 0 40px rgba(255,50,100,.7)}
+</style>
+</head>
+<body>
+<div id="game-container">
+  <canvas id="canvas"></canvas>
+  <div id="ui">
+    <div class="ui-card"><div class="ui-label">得分</div><div class="ui-value" id="score-val">0</div></div>
+    <div class="ui-card"><div class="ui-label">目标</div><div class="ui-value" style="font-size:14px;color:rgba(255,255,255,.5)">1000</div></div>
+    <div class="ui-card"><div class="ui-label">时间</div><div class="ui-value" id="timer-val">60</div></div>
+  </div>
+  <div id="overlay">
+    <div class="title" id="overlay-title">🐟 大鱼吃小鱼</div>
+    <div class="subtitle" id="overlay-sub">吃掉比你小的鱼 · 60秒内达到1000分</div>
+    <button id="overlay-btn" onclick="startGame()">开始游戏</button>
+  </div>
+</div>
+
+<script>
+// ==================== 游戏常量 ====================
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const W = 800, H = 500;
+canvas.width = W; canvas.height = H;
+
+// 响应式缩放
+function resize() {
+  const scale = Math.min(window.innerWidth/W, window.innerHeight/H, 1);
+  canvas.style.width = (W*scale)+'px';
+  canvas.style.height = (H*scale)+'px';
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ==================== DOM 引用 ====================
+const scoreEl = document.getElementById('score-val');
+const timerEl = document.getElementById('timer-val');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlay-title');
+const overlaySub = document.getElementById('overlay-sub');
+const overlayBtn = document.getElementById('overlay-btn');
+
+// ==================== 游戏状态 ====================
+const GAME_TIME = 60;
+const WIN_SCORE = 1000;
+const NPC_COUNT = 25;
+
+let player, npcs, score, timeLeft, gameRunning, gameOver, gameWin;
+let mouseX, mouseY, touchActive;
+
+// ==================== 气泡粒子 ====================
+let bubbles = [];
+function initBubbles() {
+  bubbles = [];
+  for (let i = 0; i < 30; i++) {
+    bubbles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 1 + Math.random() * 3,
+      speed: .3 + Math.random() * .8,
+      opacity: .15 + Math.random() * .25
+    });
+  }
+}
+
+// ==================== 鱼 ====================
+class Fish {
+  constructor(x, y, size, isPlayer) {
+    this.x = x;
+    this.y = y;
+    this.size = size; // 半径，决定大小
+    this.isPlayer = isPlayer;
+    this.angle = Math.random() * Math.PI * 2;
+    this.speed = isPlayer ? 3.5 : (1.2 + Math.random() * 1.8);
+    // 玩家速度随体型微调：越大越慢但不低于2.2
+    if (isPlayer) this.baseSpeed = 3.5;
+    this.vx = Math.cos(this.angle) * this.speed * .6;
+    this.vy = Math.sin(this.angle) * this.speed * .6;
+    this.tailPhase = Math.random() * Math.PI * 2;
+    this.color = this.pickColor();
+    this.finColor = this.lightenColor(this.color, .3);
+    this.eyeColor = '#fff';
+    // NPC 转向计时
+    this.turnTimer = 60 + Math.random() * 120;
+    this.turnCooldown = 0;
+  }
+
+  pickColor() {
+    if (this.isPlayer) return '#4dc9f6';
+    // 根据大小决定色系
+    const ratio = this.size / 50; // 0~1
+    if (ratio < .35) return `hsl(${140+Math.random()*40},70%,${50+Math.random()*20}%)`; // 绿色系-小
+    if (ratio < .65) return `hsl(${30+Math.random()*30},75%,${48+Math.random()*18}%)`; // 橙色系-中
+    return `hsl(${0+Math.random()*15},80%,${45+Math.random()*20}%)`; // 红色系-大
+  }
+
+  lightenColor(hexOrHsl, amount) {
+    // 简单处理：HSL 加亮度
+    return hexOrHsl; // 用原始色，fin 用半透明叠加
+  }
+
+  update() {
+    if (this.isPlayer) {
+      // 玩家：朝鼠标/触控位置移动
+      if (touchActive || mouseX !== undefined) {
+        const tx = touchActive ? mouseX : mouseX;
+        const ty = touchActive ? mouseY : mouseY;
+        if (tx !== undefined && ty !== undefined) {
+          const dx = tx - this.x, dy = ty - this.y;
+          const dist = Math.sqrt(dx*dx+dy*dy);
+          if (dist > 3) {
+            this.angle = Math.atan2(dy, dx);
+            // 速度随体型变化：越大越慢
+            const speedMod = Math.max(.55, 1 - (this.size-12)/80);
+            const spd = this.baseSpeed * speedMod;
+            this.vx = (dx/dist) * spd;
+            this.vy = (dy/dist) * spd;
+          } else {
+            this.vx *= .85; this.vy *= .85;
+          }
+        }
+      }
+    } else {
+      // NPC：随机游走
+      this.turnCooldown--;
+      if (this.turnCooldown <= 0) {
+        this.angle += (Math.random()-.5) * .8;
+        this.turnCooldown = this.turnTimer;
+        this.turnTimer = 50 + Math.random() * 100;
+      }
+      this.vx = Math.cos(this.angle) * this.speed;
+      this.vy = Math.sin(this.angle) * this.speed;
+    }
+
+    this.x += this.vx;
+    this.y += this.vy;
+
+    // 边界反弹
+    const margin = this.size;
+    if (this.x < margin) { this.x = margin; this.vx *= -.5; this.angle = Math.PI - this.angle; }
+    if (this.x > W - margin) { this.x = W - margin; this.vx *= -.5; this.angle = Math.PI - this.angle; }
+    if (this.y < margin) { this.y = margin; this.vy *= -.5; this.angle = -this.angle; }
+    if (this.y > H - margin) { this.y = H - margin; this.vy *= -.5; this.angle = -this.angle; }
+
+    this.tailPhase += .15;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+
+    const s = this.size;
+    const bodyLen = s * 2.2;
+    const bodyH = s * 1.4;
+
+    // 阴影
+    ctx.shadowColor = 'rgba(0,0,0,.25)';
+    ctx.shadowBlur = s * .3;
+    ctx.shadowOffsetY = 2;
+
+    // 身体（椭圆）
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, bodyLen*.5, bodyH*.5, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // 肚皮（浅色）
+    ctx.fillStyle = 'rgba(255,255,255,.15)';
+    ctx.beginPath();
+    ctx.ellipse(-s*.15, -s*.15, bodyLen*.35, bodyH*.3, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // 尾巴
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.moveTo(-bodyLen*.45, 0);
+    ctx.quadraticCurveTo(-bodyLen*.7, -bodyH*.55, -bodyLen*.85 - Math.sin(this.tailPhase)*s*.3, -bodyH*.25);
+    ctx.quadraticCurveTo(-bodyLen*.65, 0, -bodyLen*.85 - Math.sin(this.tailPhase)*s*.3, bodyH*.25);
+    ctx.quadraticCurveTo(-bodyLen*.7, bodyH*.55, -bodyLen*.45, 0);
+    ctx.fill();
+
+    // 背鳍
+    ctx.fillStyle = 'rgba(0,0,0,.2)';
+    ctx.beginPath();
+    ctx.moveTo(-s*.2, -bodyH*.45);
+    ctx.quadraticCurveTo(s*.1, -bodyH*.85, s*.6, -bodyH*.4);
+    ctx.quadraticCurveTo(s*.2, -bodyH*.5, -s*.2, -bodyH*.45);
+    ctx.fill();
+
+    // 胸鳍
+    ctx.fillStyle = 'rgba(0,0,0,.15)';
+    ctx.beginPath();
+    ctx.ellipse(s*.15, bodyH*.35, s*.45, s*.2, .3, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(s*.15, -bodyH*.35, s*.45, s*.2, -.3, 0, Math.PI*2);
+    ctx.fill();
+
+    // 眼睛
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    const eyeX = bodyLen*.28, eyeY = -bodyH*.18;
+    // 眼白
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(eyeX, eyeY, s*.22, 0, Math.PI*2);
+    ctx.fill();
+    // 瞳孔
+    ctx.fillStyle = '#111';
+    ctx.beginPath();
+    ctx.arc(eyeX+s*.06, eyeY, s*.12, 0, Math.PI*2);
+    ctx.fill();
+    // 高光
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(eyeX+s*.02, eyeY-s*.06, s*.05, 0, Math.PI*2);
+    ctx.fill();
+
+    // 嘴
+    ctx.strokeStyle = 'rgba(0,0,0,.3)';
+    ctx.lineWidth = s*.06;
+    ctx.beginPath();
+    ctx.arc(bodyLen*.42, bodyH*.08, s*.15, -.3, .8);
+    ctx.stroke();
+
+    ctx.restore();
+
+    // 大小标签（仅 NPC）
+    if (!this.isPlayer && this.size > 16) {
+      ctx.fillStyle = 'rgba(255,255,255,.5)';
+      ctx.font = `${Math.max(9,this.size*.4)}px system-ui`;
+      ctx.textAlign = 'center';
+      ctx.fillText(Math.round(this.size), this.x, this.y - this.size - 8);
+    }
+  }
+}
+
+// ==================== 初始化 ====================
+function createPlayer() {
+  const p = new Fish(W/2, H/2, 14, true);
+  p.baseSpeed = 3.5;
+  return p;
+}
+
+function createNPC() {
+  // 大小分布：多数小鱼，少数大鱼
+  const r = Math.random();
+  let size;
+  if (r < .45) size = 6 + Math.random() * 12;      // 小鱼 6-18
+  else if (r < .8) size = 14 + Math.random() * 16;  // 中鱼 14-30
+  else size = 22 + Math.random() * 22;               // 大鱼 22-44
+
+  // 确保不生成在玩家附近
+  let x, y;
+  do {
+    x = 40 + Math.random() * (W-80);
+    y = 40 + Math.random() * (H-80);
+  } while (player && Math.hypot(x-player.x, y-player.y) < 80);
+
+  return new Fish(x, y, size, false);
+}
+
+function initGame() {
+  player = createPlayer();
+  npcs = [];
+  for (let i = 0; i < NPC_COUNT; i++) npcs.push(createNPC());
+  score = 0;
+  timeLeft = GAME_TIME;
+  gameRunning = false;
+  gameOver = false;
+  gameWin = false;
+  mouseX = W/2; mouseY = H/2;
+  touchActive = false;
+  initBubbles();
+  updateUI();
+}
+
+// ==================== UI ====================
+function updateUI() {
+  scoreEl.textContent = score;
+  timerEl.textContent = timeLeft;
+  if (timeLeft <= 10) timerEl.classList.add('urgent');
+  else timerEl.classList.remove('urgent');
+}
+
+function showOverlay(title, sub, btnText, titleClass) {
+  overlayTitle.textContent = title;
+  overlayTitle.className = 'title ' + (titleClass||'');
+  overlaySub.textContent = sub;
+  overlayBtn.textContent = btnText;
+  overlay.classList.remove('hidden');
+}
+
+// ==================== 游戏循环 ====================
+let lastTime = 0;
+let timerAccum = 0;
+
+function gameLoop(timestamp) {
+  if (!lastTime) lastTime = timestamp;
+  const dt = Math.min((timestamp - lastTime) / 1000, .1);
+  lastTime = timestamp;
+
+  if (gameRunning && !gameOver && !gameWin) {
+    // 计时器
+    timerAccum += dt;
+    if (timerAccum >= 1) {
+      timerAccum -= 1;
+      timeLeft--;
+      updateUI();
+      if (timeLeft <= 0) {
+        endGame(false);
+      }
+    }
+
+    // 更新
+    player.update();
+    for (const npc of npcs) npc.update();
+
+    // 碰撞检测
+    for (let i = npcs.length-1; i >= 0; i--) {
+      const n = npcs[i];
+      const dist = Math.hypot(player.x-n.x, player.y-n.y);
+      const touchDist = (player.size + n.size) * .7;
+
+      if (dist < touchDist) {
+        if (player.size > n.size * 1.05) {
+          // 吃掉
+          score += Math.floor(n.size * 2);
+          player.size += n.size * .08;
+          // 速度微调
+          player.baseSpeed = Math.max(2.2, 3.5 - (player.size-12)*.03);
+          npcs.splice(i, 1);
+          // 补充新鱼
+          npcs.push(createNPC());
+          updateUI();
+
+          if (score >= WIN_SCORE) {
+            endGame(true);
+          }
+        } else if (n.size > player.size * 1.05) {
+          // 被吃
+          endGame(false);
+        }
+        // 大小相近则无事发生
+      }
+    }
+
+    // 气泡
+    for (const b of bubbles) {
+      b.y -= b.speed;
+      if (b.y < -10) { b.y = H+10; b.x = Math.random()*W; }
+    }
+  }
+
+  // 渲染
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // 背景渐变
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0a1040');
+  bg.addColorStop(.4, '#0d2060');
+  bg.addColorStop(.7, '#103070');
+  bg.addColorStop(1, '#0a2050');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // 海底光效
+  ctx.fillStyle = 'rgba(0,180,255,.03)';
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.ellipse(W*.2+i*W*.15, H*.7, 200, 60, .1, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // 气泡
+  for (const b of bubbles) {
+    ctx.fillStyle = `rgba(180,220,255,${b.opacity})`;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = `rgba(255,255,255,${b.opacity*.5})`;
+    ctx.lineWidth = .5;
+    ctx.stroke();
+  }
+
+  // 水草
+  ctx.strokeStyle = 'rgba(40,140,100,.25)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 8; i++) {
+    const sx = i*110+30, sy = H;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.quadraticCurveTo(sx+15+Math.sin(Date.now()*.001+i)*8, sy-50, sx+5, sy-100);
+    ctx.quadraticCurveTo(sx-10, sy-70, sx+Math.cos(Date.now()*.0015+i)*10, sy-40);
+    ctx.stroke();
+  }
+
+  // NPC 鱼（先画，玩家在最上层）
+  for (const npc of npcs) npc.draw(ctx);
+
+  // 玩家
+  if (player) {
+    // 玩家光环
+    ctx.fillStyle = 'rgba(100,200,255,.08)';
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.size*1.5, 0, Math.PI*2);
+    ctx.fill();
+    player.draw(ctx);
+  }
+}
+
+function endGame(won) {
+  gameRunning = false;
+  gameOver = !won;
+  gameWin = won;
+  if (won) {
+    showOverlay('🏆 胜利！', `得分: ${score} · 剩余 ${timeLeft}秒`, '再来一局', 'win-title');
+  } else {
+    const reason = timeLeft <= 0 ? '时间到！' : '被大鱼吃掉了！';
+    showOverlay('💀 游戏结束', `${reason} 最终得分: ${score}`, '重新开始', 'lose-title');
+  }
+}
+
+function startGame() {
+  initGame();
+  gameRunning = true;
+  gameOver = false;
+  gameWin = false;
+  timerAccum = 0;
+  lastTime = 0;
+  overlay.classList.add('hidden');
+  updateUI();
+}
+
+// ==================== 输入 ====================
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = W / rect.width;
+  const scaleY = H / rect.height;
+  mouseX = (e.clientX - rect.left) * scaleX;
+  mouseY = (e.clientY - rect.top) * scaleY;
+  touchActive = false;
+});
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = W / rect.width;
+  const scaleY = H / rect.height;
+  mouseX = (e.touches[0].clientX - rect.left) * scaleX;
+  mouseY = (e.touches[0].clientY - rect.top) * scaleY;
+  touchActive = true;
+}, { passive: false });
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = W / rect.width;
+  const scaleY = H / rect.height;
+  mouseX = (e.touches[0].clientX - rect.left) * scaleX;
+  mouseY = (e.touches[0].clientY - rect.top) * scaleY;
+  touchActive = true;
+}, { passive: false });
+
+canvas.addEventListener('touchend', () => { touchActive = false; });
+
+// 键盘
+document.addEventListener('keydown', e => {
+  if (!gameRunning) return;
+  const spd = player.baseSpeed * 1.2;
+  switch(e.key) {
+    case 'ArrowUp': case 'w': player.vy = -spd; player.vx *= .5; break;
+    case 'ArrowDown': case 's': player.vy = spd; player.vx *= .5; break;
+    case 'ArrowLeft': case 'a': player.vx = -spd; player.vy *= .5; break;
+    case 'ArrowRight': case 'd': player.vx = spd; player.vy *= .5; break;
+  }
+});
+
+// ==================== 启动 ====================
+initGame();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
