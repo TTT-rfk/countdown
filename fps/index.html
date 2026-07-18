@@ -20,7 +20,8 @@ canvas{display:block;position:absolute;top:0;left:0}
 .bar{width:150px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:2px 0;overflow:hidden}
 .bar-fill{height:100%;border-radius:2px;transition:width .2s}
 .hp{background:linear-gradient(90deg,#f44,#f66)}.ammo-bar{background:linear-gradient(90deg,#fa0,#fc3)}
-#score{position:absolute;top:15px;right:20px;color:#fff;font-size:20px;text-shadow:0 0 8px rgba(0,0,0,.9)}
+#score{position:absolute;top:15px;right:20px;color:#fff;font-size:20px;text-align:right;text-shadow:0 0 8px rgba(0,0,0,.9)}
+#combat-state{margin-top:4px;color:#8bd7ff;font-size:11px;letter-spacing:.5px}
 #weapon{position:absolute;bottom:20px;right:20px;color:#fa0;font-size:12px;text-shadow:0 0 6px rgba(0,0,0,.9)}
 #dmg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#f00;font-size:30px;font-weight:bold;opacity:0;text-shadow:0 0 12px rgba(255,0,0,.9)}
 #msg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;text-align:center;text-shadow:0 0 20px rgba(0,0,0,.95)}
@@ -50,11 +51,13 @@ canvas{display:block;position:absolute;top:0;left:0}
 <div id="crosshair"></div>
 <div id="hud">
 <div>❤️ <span id="hpText">100</span></div>
-<div class="bar"><div class="bar-fill hp" id="hpBar" style="width:100%"></div></div>
-<div style="margin-top:4px">🔫 <span id="ammoText">12</span>/<span id="ammoMax">12</span></div>
+ <div class="bar"><div class="bar-fill hp" id="hpBar" style="width:100%"></div></div>
+ <div style="margin-top:4px">🛡️ <span id="armorText">50</span></div>
+ <div class="bar"><div class="bar-fill" id="armorBar" style="width:50%;background:linear-gradient(90deg,#38a8ff,#8bd7ff)"></div></div>
+ <div style="margin-top:4px">🔫 <span id="ammoText">12</span>/<span id="ammoMax">12</span></div>
 <div class="bar"><div class="bar-fill ammo-bar" id="ammoBar" style="width:100%"></div></div>
 </div>
-<div id="score">🏆 <span id="scoreText">0</span></div>
+<div id="score">🏆 <span id="scoreText">0</span><div id="combat-state">WAVE <span id="waveText">1</span> · STREAK <span id="streakText">0</span></div></div>
 <div id="weapon">🔫 <span id="weaponText">手枪</span></div>
 <div id="dmg"></div>
 <div id="killfeed"></div>
